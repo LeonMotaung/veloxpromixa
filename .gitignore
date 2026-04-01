@@ -1,0 +1,47 @@
+# Velox Proxima (VP) — Git Ignore
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Data & Large Files
+# ------------------
+data/
+datasets/
+models/*.pt
+models/*.pth
+models/*.bin
+models/*.weights
+
+# Visualization & Logging
+# -----------------------
+plots/*.png
+plots/*.jpg
+plots/*.pdf
+logs/
+*.log
+
+# Environments
+# ------------
+.env
+.venv
+env/
+venv/
+ENV/
+bin/
+lib/
+share/
+include/
+
+# IDEs & System
+# -------------
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# OS generated files
+# ------------------
+.python-version
+.ipynb_checkpoints/

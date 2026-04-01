@@ -1,0 +1,18 @@
+# Velox Proxima (VP) — CIFAR-10 Example
+# Deep dense network on the CIFAR-10 image dataset (flattened).
+# Multi-level shape inference with Dropout regularization.
+
+layer Dense (512)
+layer Dropout (0.3)
+layer Dense (?)
+layer Dense (?)
+layer Dense (128)
+layer Dense (10)
+train on cifar10
+optimizer adam lr=0.0005
+epochs 10
+batch_size 128
+loss cross_entropy
+save models/cifar10_deep.pt
+plot all to plots/cifar10_curves.png
+eval on test

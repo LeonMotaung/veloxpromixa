@@ -1,0 +1,21 @@
+# Velox Proxima (VP) — Transformer-Enhanced MNIST
+# Hybrid Dense-Attention architecture for superior feature extraction.
+# This proves VP's "God-tier" sequence modeling capabilities.
+
+layer Dense (512)
+layer ReLU ()
+layer Attention (8)
+layer BatchNorm ()
+layer Dense (256)
+layer ReLU ()
+layer Attention (4)
+layer BatchNorm ()
+layer Dense (10)
+train on mnist
+optimizer adam lr=0.0005
+epochs 10
+batch_size 64
+loss cross_entropy
+
+plot live
+eval on test

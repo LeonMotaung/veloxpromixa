@@ -1,0 +1,15 @@
+# Velox Proxima (VP) — MNIST Example (10 epochs, corrected output layer)
+# The final layer must match the number of classes: 10 for MNIST.
+
+layer Dense (128)
+layer Dense (?)
+layer Dense (64)
+layer Dense (10)
+train on mnist
+optimizer adam lr=0.001
+epochs 10
+batch_size 64
+loss cross_entropy
+save models/mnist_10ep.pt
+plot all to plots/mnist_curves.png
+eval on test

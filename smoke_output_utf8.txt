@@ -1,0 +1,29 @@
+﻿=== PARSE ===
+ModelNode(
+  LayerNode(line=2, layer_type='Dense', params=[128], infer=False)
+  LayerNode(line=3, layer_type='Dense', params=[], infer=True)
+  LayerNode(line=4, layer_type='Dense', params=[64], infer=False)
+  TrainNode(line=5, dataset='mnist')
+  OptimizerNode(line=6, name='adam', hyperparams={'lr': 0.001})
+  EpochsNode(line=7, count=5)
+)
+
+=== COMPILE ===
+ComputationalGraph  nodes=3  edges=2
+  dataset=mnist  optimizer=adam  epochs=5  batch=32
+  --------------------------------------------------------
+  GraphNode(aea415cb | Dense in=784 out=128)
+  GraphNode(f7f532c8 | Dense[?] in=128 out=64)
+  GraphNode(d38bc9ab | Dense in=64 out=64)
+  edge aea415cb --> f7f532c8
+  edge f7f532c8 --> d38bc9ab
+
+=== OPTIMIZE ===
+Leon Identity applied: True
+LR schedule (first 5): [(0, 0.001), (1, 0.0009374), (2, 0.00087755), (3, 0.00081553), (4, 0.00075782)]
+Peak memory: 16.0 KB
+
+All layers after optimization:
+  GraphNode(aea415cb | Dense in=784 out=128)  fused_act=-  lazy=False
+  GraphNode(f7f532c8 | Dense[?] in=128 out=64)  fused_act=-  lazy=False
+  GraphNode(d38bc9ab | Dense in=64 out=64)  fused_act=-  lazy=False

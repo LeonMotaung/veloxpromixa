@@ -1,0 +1,19 @@
+﻿Traceback (most recent call last):
+  File "C:\Users\Leon\Documents\Machine Learning\velox\vp.py", line 107, in <module>
+    main()
+    ~~~~^^
+  File "C:\Users\Leon\Documents\Machine Learning\velox\vp.py", line 103, in main
+    dispatch[args.command](args)
+    ~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "C:\Users\Leon\Documents\Machine Learning\velox\vp.py", line 35, in cmd_run
+    results = rt.run_source(source)
+  File "C:\Users\Leon\Documents\Machine Learning\velox\velox\runtime.py", line 73, in run_source
+    return self._pipeline(source, callback)
+           ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Leon\Documents\Machine Learning\velox\velox\runtime.py", line 105, in _pipeline
+    print(BANNER)
+    ~~~~~^^^^^^^^
+  File "C:\Users\Leon\AppData\Local\Python\pythoncore-3.14-64\Lib\encodings\cp1252.py", line 19, in encode
+    return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+UnicodeEncodeError: 'charmap' codec can't encode characters in position 2-57: character maps to <undefined>

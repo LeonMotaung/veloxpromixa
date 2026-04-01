@@ -1,0 +1,24 @@
+# Velox Proxima (VP) — CNN MNIST
+# High-performance Convolutional Neural Network.
+# Optimized for NVIDIA GPUs with Auto-Mixed Precision (AMP).
+
+layer Conv2D (16, 3)
+layer BatchNorm ()
+layer Conv2D (32, 3)
+layer BatchNorm ()
+layer Dense (128)
+
+layer ReLU ()
+layer Dropout (0.2)
+layer Dense (10)
+
+train on mnist
+optimizer adam lr=0.001
+epochs 5
+batch_size 128
+loss cross_entropy
+
+save models/mnist_cnn.pt
+plot live
+eval on test
+

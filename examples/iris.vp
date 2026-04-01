@@ -1,0 +1,13 @@
+# Velox Proxima (VP) — Iris Classifier
+# Simple 3-class classification on the Iris dataset.
+# Uses shape inference (?) for both hidden layers.
+
+layer Dense (32)
+layer Dense (?)
+layer Dense (?)
+layer Dense (3)
+train on iris
+optimizer sgd lr=0.01 momentum=9
+epochs 30
+batch_size 16
+loss cross_entropy

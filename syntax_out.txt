@@ -1,0 +1,17 @@
+﻿=== PARSE ===
+  layers : 3
+  save   : SaveNode(line=10, path='models/mnist_10ep.pt')
+  plot   : PlotNode(line=11, targets=['loss', 'accuracy'], save_path='plots/mnist_curves.png')
+  eval   : EvalNode(line=12, split='test')
+
+=== COMPILE ===
+  nodes      : 3
+  save_path  : models/mnist_10ep.pt
+  plot_targets: ['loss', 'accuracy']
+  plot_save  : plots/mnist_curves.png
+  eval_split : test
+  Dense         in=784     out=128
+  Dense         in=128     out=64 [?->inferred]
+  Dense         in=64      out=64
+
+SYNTAX_OK
