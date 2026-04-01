@@ -22,7 +22,9 @@ class NodeType(Enum):
     BATCHNORM = auto()
     ACTIVATION = auto()
     ATTENTION = auto()
+    MAXPOOL2D = auto()
     OUTPUT  = auto()
+
 
 
 
@@ -35,6 +37,9 @@ LAYER_TYPE_MAP = {
     "Dropout":   NodeType.DROPOUT,
     "BatchNorm": NodeType.BATCHNORM,
     "Attention": NodeType.ATTENTION,
+    "MaxPool2D": NodeType.MAXPOOL2D,
+    "MaxPool":   NodeType.MAXPOOL2D,
+
 
 
     "ReLU":      NodeType.ACTIVATION,

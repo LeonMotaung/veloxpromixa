@@ -1,0 +1,18 @@
+# Velox Proxima (VP) — Core Requirements
+
+# Machine Learning Engine
+torch>=2.0.0
+torchvision>=0.15.0
+
+# Optimization & Utilities
+scikit-learn>=1.2.0
+numpy>=1.22.0
+
+# Visualization
+matplotlib>=3.6.0
+
+# API & Serving Layer
+fastapi>=0.95.0
+uvicorn>=0.21.0
+python-multipart>=0.0.6
+pydantic>=1.10.0

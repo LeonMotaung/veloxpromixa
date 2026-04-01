@@ -67,14 +67,16 @@ class Parser:
             self.pos += 1
         return tok
 
-    def expect(self, tt: TokenType) -> Token:
+    def expect(self, *types: TokenType) -> Token:
         tok = self.peek()
-        if tok.type != tt:
+        if tok.type not in types:
+            type_names = " or ".join(t.name for t in types)
             raise ParseError(
-                f"Expected {tt.name}, got {tok.type.name} ({tok.value!r})",
+                f"Expected {type_names}, got {tok.type.name} ({tok.value!r})",
                 tok.line,
             )
         return self.advance()
+
 
     def skip_newlines(self):
         while self.peek().type == TokenType.NEWLINE:
@@ -200,7 +202,8 @@ class Parser:
     def _parse_train(self) -> TrainNode:
         start = self.advance()          # consume 'train'
         self.expect(TokenType.ON)
-        ds_tok = self.expect(TokenType.IDENTIFIER)
+        ds_tok = self.expect(TokenType.IDENTIFIER, TokenType.FILEPATH)
+
         return TrainNode(dataset=ds_tok.value, line=start.line)
 
     def _parse_optimizer(self) -> OptimizerNode:

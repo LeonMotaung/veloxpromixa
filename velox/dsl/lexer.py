@@ -27,6 +27,8 @@ class TokenType(Enum):
     ALL        = auto()
     LIVE       = auto()
     ATTENTION  = auto()
+    MAXPOOL2D  = auto()
+
 
 
 
@@ -66,7 +68,10 @@ KEYWORDS = {
     "all":        TokenType.ALL,
     "live":       TokenType.LIVE,
     "attention":  TokenType.ATTENTION,
+    "maxpool2d":  TokenType.MAXPOOL2D,
+    "maxpool":    TokenType.MAXPOOL2D,
 }
+
 
 
 # Order matters — longer/more-specific patterns first

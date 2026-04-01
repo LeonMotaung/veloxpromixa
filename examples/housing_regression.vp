@@ -1,0 +1,18 @@
+# Velox Proxima (VP) — California House Pricing
+# Regression model for predicting median house value.
+# Uses 'MSE' (Mean Squared Error) and 'Housing' dataset.
+
+layer Dense (64)
+layer ReLU ()
+layer Dense (32)
+layer ReLU ()
+layer Dense (1)
+
+train on housing
+optimizer adam lr=0.01
+epochs 20
+batch_size 128
+loss mse
+
+plot live
+eval on test

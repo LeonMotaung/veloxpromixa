@@ -1,0 +1,18 @@
+# Velox Proxima (VP) — Custom CSV Training
+# Demonstrates training on any local CSV file.
+# The system automatically handles normalization and label mapping.
+
+layer Dense (32)
+layer ReLU ()
+layer Dense (16)
+layer ReLU ()
+layer Dense (3)
+
+train on data/sample_iris.csv
+optimizer adam lr=0.01
+epochs 20
+batch_size 16
+loss cross_entropy
+
+plot live
+eval on test

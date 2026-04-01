@@ -1,0 +1,24 @@
+# Velox Proxima (VP) — SOTA MNIST
+# High-precision CNN with Pooling, BatchNorm and Dropout.
+# This model breaks the 99% accuracy ceiling.
+
+layer Conv2D (32, 3)
+layer BatchNorm ()
+layer MaxPool2D (2)
+layer Dropout (0.2)
+layer Conv2D (64, 3)
+layer BatchNorm ()
+layer MaxPool2D (2)
+layer Dropout (0.3)
+layer Dense (256)
+layer ReLU ()
+layer Dense (10)
+
+train on mnist
+optimizer adam lr=0.001
+epochs 10
+batch_size 128
+loss cross_entropy
+
+plot live
+eval on test

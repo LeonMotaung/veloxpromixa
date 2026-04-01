@@ -23,7 +23,10 @@ DATASET_REGISTRY: Dict[str, Tuple[int, int, tuple]] = {
     "cifar10": (3072, 10, (3, 32, 32)),
     "iris":    (4,    3,  (4,)),
     "fashion_mnist": (784, 10, (1, 28, 28)),
+    "housing":       (8,    1,  (8,)),
+    "house_pricing": (8,    1,  (8,)),
 }
+
 
 # Default activation to insert after Dense/Conv layers
 DEFAULT_ACTIVATION = "relu"
@@ -143,8 +146,11 @@ class GraphBuilder:
                     node.metadata["heads"] = int(params[0])
                     if len(params) > 1:
                         node.metadata["dim"] = int(params[1])
+                elif ntype == NodeType.MAXPOOL2D:
+                    node.metadata["kernel_size"] = int(params[0]) if params else 2
                 elif ntype == NodeType.ACTIVATION:
                     node.metadata["fn"] = layer.layer_type.lower()
+
 
 
             self.graph.add_node(node)
@@ -159,8 +165,24 @@ class GraphBuilder:
           Forward pass  — propagate in_features from dataset input size.
           Backward pass — fill '?' out_features using geometric mean.
         """
-        ds_info = DATASET_REGISTRY.get(self.graph.dataset, (784, 10, (784,)))
-        input_size, num_classes, _ = ds_info
+        ds_name = self.graph.dataset
+        import os
+        if ds_name in DATASET_REGISTRY:
+             input_size, num_classes, _ = DATASET_REGISTRY[ds_name]
+        elif os.path.exists(ds_name) and ds_name.lower().endswith(".csv"):
+             # Simple probe
+             import pandas as pd
+             df = pd.read_csv(ds_name)
+             input_size = df.shape[1] - 1
+             import numpy as np
+             y = df.iloc[:, -1].values
+             # logic for num_classes
+             is_regr = not (y.dtype.kind in 'i' or (y.dtype.kind in 'f' and np.all(y == y.astype(int))))
+             num_classes = 1 if is_regr else len(np.unique(y))
+        else:
+             # Default fallback (MNIST)
+             input_size, num_classes, _ = DATASET_REGISTRY.get("mnist")
+
 
         nodes = self.graph.nodes
 
@@ -170,8 +192,9 @@ class GraphBuilder:
             node.in_features = prev_out
             if node.out_features is not None:
                 prev_out = node.out_features
-            elif node.node_type in (NodeType.DROPOUT, NodeType.BATCHNORM, NodeType.ACTIVATION, NodeType.ATTENTION):
+            elif node.node_type in (NodeType.DROPOUT, NodeType.BATCHNORM, NodeType.ACTIVATION, NodeType.ATTENTION, NodeType.MAXPOOL2D):
                 node.out_features = prev_out  # pass-through
+
 
             # '?' nodes deferred to backward pass
 

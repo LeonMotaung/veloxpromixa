@@ -132,8 +132,12 @@ def _build_torch_model(graph: ComputationalGraph, input_size, num_classes: int):
             heads = node.metadata.get("heads", 8)
             dim = node.in_features or 512
             layers.append(_AttentionWrapper(dim, heads))
+        elif node.node_type == NodeType.MAXPOOL2D:
+            ks = node.metadata.get("kernel_size", 2)
+            layers.append(nn.MaxPool2d(kernel_size=ks, stride=ks))
 
         elif node.node_type == NodeType.LINEAR:
+
 
             if is_spatial:
                 layers.append(nn.Flatten())
@@ -224,7 +228,42 @@ def _load_dataset(name: str, batch_size: int):
     except ImportError:
         raise RuntimeError("[VP] PyTorch is required.")
 
+    import os
+    if os.path.exists(name) and name.lower().endswith(".csv"):
+        try:
+            import pandas as pd
+            import torch
+            df = pd.read_csv(name)
+            X = df.iloc[:, :-1].values
+            y = df.iloc[:, -1].values
+            
+            # Inference: categorical vs continuous
+            import numpy as np
+            is_regr = not (y.dtype.kind in 'i' or (y.dtype.kind in 'f' and np.all(y == y.astype(int))))
+            
+            if not is_regr:
+                unique_labels = np.unique(y)
+                label_map = {l: i for i, l in enumerate(unique_labels)}
+                y = np.array([label_map[l] for l in y])
+                num_outputs = len(unique_labels)
+                y_type = torch.long
+            else:
+                num_outputs = 1
+                y_type = torch.float32
+                y = y.reshape(-1, 1)
+
+            from sklearn.preprocessing import StandardScaler
+            X = StandardScaler().fit_transform(X)
+            
+            from torch.utils.data import TensorDataset, DataLoader
+            ds = TensorDataset(torch.tensor(X, dtype=torch.float32), torch.tensor(y, dtype=y_type))
+            loader = DataLoader(ds, batch_size=batch_size, shuffle=True)
+            return loader, loader, X.shape[1], num_outputs
+        except Exception as e:
+            print(f"[VP] CSV Load Error: {e}")
+
     name = name.lower()
+
 
     if name in ("mnist", "fashion_mnist"):
         try:
@@ -300,6 +339,36 @@ def _load_dataset(name: str, batch_size: int):
         ds = TensorDataset(x, y)
         loader = DataLoader(ds, batch_size=batch_size, shuffle=True)
         return loader, loader, 4, 3
+
+    elif name in ("housing", "house_pricing"):
+        try:
+            from sklearn.datasets import fetch_california_housing
+            from sklearn.model_selection import train_test_split
+            from sklearn.preprocessing import StandardScaler
+            import torch
+            data = fetch_california_housing()
+            X, y = data.data, data.target
+            # y is already continuous
+            scaler = StandardScaler()
+            X = scaler.fit_transform(X)
+            X_train, X_test, y_train, y_test = train_test_split(X, y.reshape(-1, 1), test_size=0.2)
+            X_train = torch.tensor(X_train, dtype=torch.float32)
+            y_train = torch.tensor(y_train, dtype=torch.float32)
+            X_test  = torch.tensor(X_test,  dtype=torch.float32)
+            y_test  = torch.tensor(y_test,  dtype=torch.float32)
+            train_ds = TensorDataset(X_train, y_train)
+            test_ds  = TensorDataset(X_test,  y_test)
+            train_loader = DataLoader(train_ds, batch_size=batch_size, shuffle=True)
+            test_loader  = DataLoader(test_ds,  batch_size=batch_size)
+            return train_loader, test_loader, 8, 1
+        except ImportError:
+            pass
+        x = torch.randn(1000, 8)
+        y = torch.randn(1000, 1)
+        ds = TensorDataset(x, y)
+        loader = DataLoader(ds, batch_size=batch_size, shuffle=True)
+        return loader, loader, 8, 1
+
 
     else:
         raise ValueError(f"[VP] Unknown dataset: {name!r}. Available: mnist, cifar10, iris, fashion_mnist")
@@ -430,6 +499,9 @@ class Executor:
         if meta.get("leon_identity_applied") and lr_schedule:
             self._log("[VP] Leon Identity LR schedule active. Equilibrium stable.")
 
+        is_regression = num_classes == 1
+
+
         # ── Training loop
         results = []
         for epoch in range(1, self.graph.epochs + 1):
@@ -458,21 +530,24 @@ class Executor:
                 amp.step(optimizer)
 
                 total_loss += loss.item()
-                preds = out.argmax(dim=1) if out.shape[-1] > 1 else (out > 0.5).long().squeeze()
-                correct += (preds == batch_y).sum().item()
+                if not is_regression:
+                    preds = out.argmax(dim=1) if out.shape[-1] > 1 else (out > 0.5).long().squeeze()
+                    correct += (preds == batch_y).sum().item()
                 total += batch_y.size(0)
 
             avg_loss = total_loss / len(train_loader)
-            acc = 100.0 * correct / total
+            acc = 100.0 * correct / total if not is_regression else 0.0
             current_lr = optimizer.param_groups[0]["lr"]
 
+            metric_str = f"  acc={acc:.1f}%" if not is_regression else ""
             self._log(
                 f"  Epoch {epoch:>3}/{self.graph.epochs}"
                 f"  loss={avg_loss:.4f}"
-                f"  acc={acc:.1f}%"
+                f"{metric_str}"
                 f"  lr={current_lr:.2e}"
             )
             results.append({"epoch": epoch, "loss": avg_loss, "acc": acc, "lr": current_lr})
+
 
             if callback:
                 callback(epoch, avg_loss, acc)
@@ -496,17 +571,21 @@ class Executor:
                 batch_x = batch_x.to(device)
                 batch_y = batch_y.to(device)
                 out = model(batch_x)
-                preds = out.argmax(dim=1) if out.shape[-1] > 1 else (out > 0.5).long().squeeze()
-                correct += (preds == batch_y).sum().item()
-                total += batch_y.size(0)
-                all_preds.extend(preds.cpu().tolist())
+                if not is_regression:
+                    preds = out.argmax(dim=1) if out.shape[-1] > 1 else (out > 0.5).long().squeeze()
+                    correct += (preds == batch_y).sum().item()
+                    all_preds.extend(preds.cpu().tolist())
+                else:
+                    all_preds.extend(out.cpu().tolist())
                 all_labels.extend(batch_y.cpu().tolist())
+                total += batch_y.size(0)
 
-        test_acc = 100.0 * correct / total if total > 0 else 0.0
-        self._log(f"\n[VP] {eval_label} Accuracy: {test_acc:.2f}%")
+        test_acc = 100.0 * correct / total if total > 0 and not is_regression else 0.0
+        if not is_regression:
+            self._log(f"\n[VP] {eval_label} Accuracy: {test_acc:.2f}%")
 
         # Per-class breakdown (up to 10 classes)
-        if self.graph.eval_split:
+        if self.graph.eval_split and not is_regression:
             classes = sorted(set(all_labels))
             self._log(f"[VP] Per-class accuracy ({eval_label}):")
             for cls in classes[:10]:
@@ -514,6 +593,9 @@ class Executor:
                 cls_correct = sum(1 for i in idxs if all_preds[i] == cls)
                 cls_acc = 100.0 * cls_correct / len(idxs) if idxs else 0.0
                 self._log(f"       Class {cls:>3}: {cls_acc:.1f}%  ({cls_correct}/{len(idxs)})")
+        elif is_regression:
+             self._log(f"\n[VP] {eval_label} Complete (Regression Mode)")
+
 
         # ── Save model
         if self.graph.save_path:
