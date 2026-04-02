@@ -43,9 +43,12 @@ LAYER_TYPE_MAP = {
 
 
     "ReLU":      NodeType.ACTIVATION,
+    "LeakyReLU": NodeType.ACTIVATION,
+    "ELU":       NodeType.ACTIVATION,
     "Sigmoid":   NodeType.ACTIVATION,
     "Softmax":   NodeType.ACTIVATION,
     "Tanh":      NodeType.ACTIVATION,
+
 }
 
 

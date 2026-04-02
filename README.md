@@ -1,140 +1,86 @@
-# Velox Proxima (VP)
-
-> A high-level declarative language and runtime system for machine learning.
-
-```
-layer Dense (128)
-layer Dense (?)
-layer Dense (64)
-train on mnist
-```
-
-That's all you need to train a neural network. No PyTorch boilerplate, no tensor shapes, no device configuration.
+<div align="center">
+  <img src="frontend/public/images/onblack.png" alt="Velox Proxima Logo" width="120" />
+  <h1>⚡ VELOX PROXIMA ⚡</h1>
+  <p><b>The High-Performance AI Declarative Engine & Inference Hub</b></p>
+  <p><i>Standardizing neural geometry for the next generation of edge-native agents.</i></p>
+</div>
 
 ---
 
-## Architecture
+## [SYSTEM] The Core Philosophy [SYSTEM]
 
-| Layer | Component | Description |
-|-------|-----------|-------------|
-| 1 | **Syntax Layer** | Lexer + Parser → AST |
-| 2 | **Compiler Layer** | AST → Computational Graph G=(V, E) |
-| 3 | **Optimization Layer** | Operator fusion, memory opt, Leon Identity LR scheduling |
-| 4 | **Execution Engine** | PyTorch model training on CPU/GPU/MPS |
-| 5 | **Infrastructure Layer** | Cluster management, auto-scaling, fault tolerance |
+Velox Proxima (VP) is a zero-boilerplate, industrial-grade AI ecosystem. It replaces thousands of lines of manual PyTorch/TensorFlow code with a single, high-fidelity **Declarative Blueprint**. By solving neural geometry at the compiler level (L2), Velox ensures that your architectures are mathematically optimal and ready for production inference in milliseconds.
 
 ---
 
-## Quick Start
+## [INFRA] Key Features [INFRA]
 
-### Install
+*   **Declarative DSL**: Write human-readable `.vp` Blueprints. No manual shape tracking or dimension management required.
+*   **Universal Sieve**: Seamlessly train on any dataset (MNIST, CIFAR, CSV, or custom JSON) with auto-normalization.
+*   **Persistent Model Zoo**: Every training run is automatically versioned, weight-serialized, and stored in the Registry for instant recall.
+*   **Dual-Theme Dashboard**: A premium React monitoring hub with real-time convergence streaming and one-click inference.
+*   **Deterministic Compiler**: Built-in symbolic shape inference (?) that automatically solves your network grid geometry.
+
+---
+
+## [DEPLOY] Installation & Quick Start [DEPLOY]
+
+### 1. One-Liner (Universal Installer)
+Run this command in your terminal to install the engine, its dependencies, and the dashboard ecosystem:
+```powershell
+powershell -c "irm https://veloxproxima.ai/install.ps1 | iex"
+```
+
+### 2. Manual Environment Setup
 ```bash
-pip install torch torchvision
-pip install -e .
+git clone https://github.com/LeonMotaung/veloxpromixa
+pip install -r requirements.txt
 ```
 
-### Write a `.vp` file
-```
-# my_model.vp
-layer Dense (256)
-layer Dense (?)        # <-- auto-inferred dimension
-layer Dense (64)
-train on mnist
-optimizer adam lr=0.001
-epochs 10
-batch_size 32
-```
-
-### Run
+### 3. Launch the Hub
 ```bash
-python vp.py run examples/mnist_dense.vp
-# or with CLI overrides:
-python vp.py run examples/mnist_dense.vp --epochs 20 --lr 0.0005
-```
+# Start the Inference API
+python api.py
 
-### Inspect
-```bash
-python vp.py parse   examples/mnist_dense.vp    # print AST
-python vp.py compile examples/mnist_dense.vp    # print optimised graph
-python vp.py version
+# Launch the Dashboard (Port 3004)
+cd frontend && npm run dev
 ```
 
 ---
 
-## VP Language Reference
+## [GUIDE] The Velox Blueprint Language [GUIDE]
 
-### Layers
-```
-layer Dense (units)          # Fully-connected layer
-layer Dense (?)              # Auto-infer dimension
-layer Dropout (rate)         # Dropout regularization
-layer BatchNorm ()           # Batch normalization
-layer LSTM (hidden_size)     # Recurrent layer
-layer Conv2D (filters, size) # Convolutional layer
-layer ReLU ()                # Activation (standalone)
-layer Sigmoid ()
-layer Tanh ()
-```
+Example of a SOTA Transformer-Vision model in Velox DSL:
+```vp
+# High-precision vision blueprint
+layer Conv2D (64, 3)     # 64 filters, 3x3 kernel
+layer MaxPool2D (2)      # Downsampling logic
+layer BatchNorm ()       # Stability normalization
+layer Attention (8, ?)   # 8-head symbolic attention
+layer Dense (10)         # 10-class output head
 
-### Training Config
-```
-train on <dataset>           # mnist | cifar10 | iris | fashion_mnist
-optimizer <name> lr=<f>      # adam | sgd | rmsprop | adagrad
-epochs <n>
-batch_size <n>
-loss <name>                  # cross_entropy | mse | bce
-```
-
-### Shape Inference Operator `?`
-When `?` is used, VP automatically computes the optimal layer dimension
-using the **geometric mean** of the preceding and succeeding known dimensions,
-snapped to the nearest power of 2.
-
-```
-layer Dense (512)      # in=784, out=512
-layer Dense (?)        # inferred: geometric_mean(512, 64) ≈ 181 → 128
-layer Dense (64)
+train on cifar10         # Automatic dataset fetch
+optimizer adam lr=0.001  # Leon Identity optimization
+epochs 10                # Training depth
+loss cross_entropy       # Objective function
 ```
 
 ---
 
-## Leon Identity Stabilization
+## [STRUCTURE] The 5-Layer Pipeline [STRUCTURE]
 
-VP uses the **Leon Identity** formula to compute a stable learning rate schedule:
-
-```
-P_{t+1} = P_t + γ · (1 - 1/ESI) · (P_∞ - P_t) + ε_t
-```
-
-This prevents training divergence and smoothly decays the LR toward equilibrium.
+1.  **L1: Lexical Layer** - Tokenization of the Velox DSL.
+2.  **L2: Compiler Layer** - Symbolic shape solving and graph construction.
+3.  **L3: Optimization Layer** - Weight initialization and Leon Identity stabilization.
+4.  **L4: Execution Layer** - High-speed PyTorch backend with AMP support.
+5.  **L5: Interface Layer** - FastAPI REST Server + React Proxima Dashboard.
 
 ---
 
-## Examples
+## [TRUST] Contributors & Project Info [TRUST]
 
-| File | Dataset | Description |
-|------|---------|-------------|
-| `examples/mnist_dense.vp` | MNIST | 3-layer dense with shape inference |
-| `examples/iris.vp` | Iris | Tiny classifier, SGD optimizer |
-| `examples/cifar10.vp` | CIFAR-10 | Deep network with Dropout |
+*   **Lead Architect**: Leon Motaung
+*   **Status**: v0.2.1 Proxima Stable
+*   **Affiliation**: Independent Project (Privacy-First)
 
----
-
-## Python API
-
-```python
-from velox.runtime import VeloxRuntime
-
-rt = VeloxRuntime()
-results = rt.run_source("""
-    layer Dense (128)
-    layer Dense (?)
-    layer Dense (64)
-    train on mnist
-    epochs 5
-""")
-
-print(results["test_accuracy"])
-print(results["history"])       # per-epoch loss/acc
-print(results["graph"].summary())
-```
+*Formerly known as Proxima. Developed with soul for the global AI community.*

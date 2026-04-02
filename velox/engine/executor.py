@@ -188,13 +188,16 @@ def _build_torch_model(graph: ComputationalGraph, input_size, num_classes: int):
 def _activation(name: str):
     import torch.nn as nn
     mapping = {
-        "relu":    nn.ReLU(),
-        "sigmoid": nn.Sigmoid(),
-        "tanh":    nn.Tanh(),
-        "softmax": nn.Softmax(dim=-1),
-        "gelu":    nn.GELU(),
+        "relu":      nn.ReLU(),
+        "leakyrelu": nn.LeakyReLU(0.1),
+        "elu":       nn.ELU(),
+        "sigmoid":   nn.Sigmoid(),
+        "tanh":      nn.Tanh(),
+        "softmax":   nn.Softmax(dim=-1),
+        "gelu":      nn.GELU(),
     }
     return mapping.get(name.lower(), nn.ReLU())
+
 
 
 class _LSTMWrapper:
