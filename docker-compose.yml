@@ -1,0 +1,25 @@
+version: '3.8'
+
+services:
+  backend:
+    build: .
+    container_name: velox_backend
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./data:/app/data
+      - ./models:/app/models
+      - ./runs:/app/runs
+      - ./logs:/app/logs
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+    restart: unless-stopped
+
+  frontend:
+    build: ./frontend
+    container_name: velox_frontend
+    ports:
+      - "5173:80"  # Expose Nginx on port 5173
+    depends_on:
+      - backend
+    restart: unless-stopped
