@@ -1,0 +1,19 @@
+{
+  "job_id": "6cc6c72c",
+  "status": "completed",
+  "source": "layer Dense (INFER)\nlayer Dense (1)\ntrain on sample_iris.csv\nloss mse\nepochs 1\nbatch_size 4\n",
+  "results": {
+    "history": [
+      {
+        "epoch": 1,
+        "loss": 1.2650706281787472,
+        "acc": 21.333333333333332
+      }
+    ],
+    "test_accuracy": 24.0,
+    "test_rmse": null,
+    "test_mae": null,
+    "total_time": 39.902960777282715
+  },
+  "timestamp": 1775164826.854249
+}

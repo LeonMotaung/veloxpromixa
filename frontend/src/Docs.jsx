@@ -9,6 +9,7 @@ export default function Docs() {
   const [allDocs, setAllDocs] = useState({});
   const [loading, setLoading] = useState(true);
   const [theme, setTheme] = useState(localStorage.getItem('theme') || 'dark');
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 900);
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
@@ -16,6 +17,12 @@ export default function Docs() {
   }, [theme]);
 
   const toggleTheme = () => setTheme(theme === 'dark' ? 'light' : 'dark');
+
+  useEffect(() => {
+    const onResize = () => setIsMobile(window.innerWidth < 900);
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
 
   useEffect(() => {
     // Fetch all docs once on mount
@@ -41,7 +48,7 @@ export default function Docs() {
 
   return (
     <div style={{ backgroundColor: 'var(--background)', color: 'var(--text)', minHeight: '100vh', transition: 'all 0.4s' }}>
-      <nav style={{ borderBottom: '1px solid var(--border)', padding: '16px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+      <nav style={{ borderBottom: '1px solid var(--border)', padding: isMobile ? '12px 16px' : '16px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: isMobile ? 'rgba(59,130,246,0.12)' : 'linear-gradient(90deg, rgba(59,130,246,0.12), rgba(168,85,247,0.12))', backdropFilter: 'blur(10px)', position: 'sticky', top: 0, zIndex: 15 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
              <Link to="/" style={{ color: 'var(--primary)', display: 'flex', alignItems: 'center', gap: '12px', textDecoration: 'none' }}>
                 <ChevronLeft size={24} />
@@ -77,7 +84,7 @@ export default function Docs() {
         </div>
       </nav>
 
-      <div className="container" style={{ display: 'grid', gridTemplateColumns: '250px 1fr', gap: '48px', paddingTop: '40px' }}>
+      <div className="container" style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '260px 1fr', gap: isMobile ? '24px' : '48px', paddingTop: '32px', paddingBottom: '40px' }}>
           
           <aside>
              <h4 style={{ fontSize: '11px', opacity: 0.4, letterSpacing: '1px', marginBottom: '16px' }}>CORE GUIDES</h4>
@@ -92,13 +99,14 @@ export default function Docs() {
           </aside>
 
           <main className="glass-panel" style={{ 
-            padding: '60px', 
+            padding: isMobile ? '28px' : '60px', 
             overflowY: 'auto', 
-            marginBottom: '100px',
+            marginBottom: '60px',
             background: 'var(--glass)',
             border: '1px solid var(--border)',
             display: 'flex',
-            flexDirection: 'column'
+            flexDirection: 'column',
+            minWidth: 0
           }}>
              {loading ? (
                <div style={{ opacity: 0.8, color: 'var(--text)', letterSpacing: '2px', fontWeight: 800, textAlign: 'center', marginTop: '100px' }}>
@@ -122,6 +130,10 @@ export default function Docs() {
          #markdown-container table { width: 100%; border-collapse: collapse; margin: 32px 0; }
          #markdown-container th { text-align: left; opacity: 0.4; font-size: 11px; padding: 12px; border-bottom: 1px solid var(--border); }
          #markdown-container td { padding: 12px; border-bottom: 1px solid var(--border); font-size: 14px; }
+         @media (max-width: 900px) {
+           #markdown-container h1 { font-size: 30px; }
+           #markdown-container h2 { font-size: 20px; }
+         }
          .spin { animation: spin 2s linear infinite; }
          @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
       `}</style>

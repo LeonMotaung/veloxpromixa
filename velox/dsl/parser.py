@@ -19,7 +19,7 @@ Grammar (simplified):
                  | NEWLINE
 
     layer_stmt  := LAYER IDENTIFIER LPAREN param_list RPAREN NEWLINE?
-    param_list  := (param (COMMA param)*)? | INFER
+    param_list  := (param (COMMA param)*)? | INFER | (param (COMMA INFER)*)
     param       := INTEGER | FLOAT | IDENTIFIER
 
     train_stmt  := TRAIN ON IDENTIFIER NEWLINE?
@@ -162,15 +162,28 @@ class Parser:
         params: List[Union[int, float, str]] = []
         infer = False
 
+        # Allow '?' anywhere in the argument list. Any appearance marks the
+        # layer as inferable, but the token itself is not treated as a numeric
+        # parameter.
         if self.match(TokenType.INFER):
             self.advance()
             infer = True
         elif not self.match(TokenType.RPAREN):
-            params.append(self._parse_param())
+            val = self._parse_param()
+            if val == "__INFER__":
+                infer = True
+            else:
+                params.append(val)
+
             while not self.match(TokenType.RPAREN, TokenType.NEWLINE, TokenType.EOF):
                 if self.match(TokenType.COMMA):
                     self.advance()
-                params.append(self._parse_param())
+                    continue
+                val = self._parse_param()
+                if val == "__INFER__":
+                    infer = True
+                else:
+                    params.append(val)
 
 
 
@@ -192,7 +205,13 @@ class Parser:
             return int(tok.value)
         elif tok.type == TokenType.IDENTIFIER:
             self.advance()
+            # Treat textual INFER/infer as the wildcard marker too
+            if tok.value.lower() == "infer":
+                return "__INFER__"
             return tok.value
+        elif tok.type == TokenType.INFER:
+            self.advance()
+            return "__INFER__"
         else:
             raise ParseError(
                 f"Expected parameter (number or identifier), got {tok.type.name}",

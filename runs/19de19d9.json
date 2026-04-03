@@ -1,0 +1,54 @@
+{
+  "job_id": "19de19d9",
+  "status": "completed",
+  "source": "# Small CNN\nlayer Conv2D (32, 3)\nlayer MaxPool2D (2)\nlayer Conv2D (64, 3)\nlayer MaxPool2D (2)\nlayer Dense (128)\nlayer Dense (INFER)\ntrain on mnist\nloss cross_entropy\noptimizer adam lr=0.001\nbatch_size 64\nepochs 8\n",
+  "results": {
+    "history": [
+      {
+        "epoch": 1,
+        "loss": 0.12341607604419062,
+        "acc": 96.23833333333333
+      },
+      {
+        "epoch": 2,
+        "loss": 0.04383583277176474,
+        "acc": 98.645
+      },
+      {
+        "epoch": 3,
+        "loss": 0.03154429638038649,
+        "acc": 99.00333333333333
+      },
+      {
+        "epoch": 4,
+        "loss": 0.024330064307020265,
+        "acc": 99.22
+      },
+      {
+        "epoch": 5,
+        "loss": 0.018173253158591307,
+        "acc": 99.435
+      },
+      {
+        "epoch": 6,
+        "loss": 0.01500352753115868,
+        "acc": 99.535
+      },
+      {
+        "epoch": 7,
+        "loss": 0.012477088499933372,
+        "acc": 99.585
+      },
+      {
+        "epoch": 8,
+        "loss": 0.00832955442103406,
+        "acc": 99.73166666666667
+      }
+    ],
+    "test_accuracy": 99.04,
+    "test_rmse": null,
+    "test_mae": null,
+    "total_time": 1662.0861246585846
+  },
+  "timestamp": 1775170809.362786
+}

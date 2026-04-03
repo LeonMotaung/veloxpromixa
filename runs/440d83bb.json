@@ -1,0 +1,39 @@
+{
+  "job_id": "440d83bb",
+  "status": "completed",
+  "source": "# Velox Proxima Blueprint - Transformer MNIST\nlayer Conv2D (32, 3)\nlayer MaxPool2D (2)\nlayer BatchNorm ()\nlayer Attention (8, ?)\nlayer Dense (10)\n\ntrain on mnist\noptimizer adam lr=0.001\nepochs 5\nbatch_size 64\nloss cross_entropy",
+  "results": {
+    "history": [
+      {
+        "epoch": 1,
+        "loss": 0.15058173077962378,
+        "acc": 95.42666666666666
+      },
+      {
+        "epoch": 2,
+        "loss": 0.0630380778406153,
+        "acc": 98.03333333333333
+      },
+      {
+        "epoch": 3,
+        "loss": 0.038843195658112104,
+        "acc": 98.74333333333334
+      },
+      {
+        "epoch": 4,
+        "loss": 0.029294670632458168,
+        "acc": 99.00833333333334
+      },
+      {
+        "epoch": 5,
+        "loss": 0.01978489762498016,
+        "acc": 99.32166666666667
+      }
+    ],
+    "test_accuracy": 98.02,
+    "test_rmse": null,
+    "test_mae": null,
+    "total_time": 880.7358770370483
+  },
+  "timestamp": 1775133619.558118
+}

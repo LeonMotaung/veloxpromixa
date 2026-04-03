@@ -1,0 +1,225 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\hypersetup{colorlinks=true, linkcolor=blue, urlcolor=blue}
+\graphicspath{{frontend/public/images/}{./}}
+
+\title{Velox Proxima System Design}
+\author{Velox Engineering}
+\date{\today}
+
+\begin{document}
+\begin{titlepage}
+  \centering
+  \vspace*{1cm}
+  \includegraphics[width=0.25\textwidth]{onblack.png}\\[1.2cm]
+  {\Huge \textbf{Velox Proxima}}\\[0.3cm]
+  {\Large Equilibrium AI Engine -- Architecture and Operations}\\[1cm]
+  {\large \today}
+\end{titlepage}
+
+\tableofcontents
+\newpage
+
+\section{Executive Summary}
+Velox Proxima (VP) is an infrastructure-first AI engine that:
+\begin{itemize}
+  \item Treats Blueprints (DSL files) as first-class workloads.
+  \item Balances cost, latency, and thermal headroom via an Equilibrium Scheduler.
+  \item Compiles to one-binary targets for laptop, data-center GPU, and edge/mobile.
+  \item Routes to local models or remote LLM proxies (e.g., ChatGPT) with guardrails.
+\end{itemize}
+
+\section{Layered Architecture}
+\subsection{Creative Frontend (Lexical \& Semantic)}
+\begin{itemize}
+  \item \textbf{VP Parser}: MLIR/LLVM-based; builds AST from \texttt{.vp} Blueprints.
+  \item \textbf{Inference Engine}: Static shape/dtype inference (``?'' operator).
+  \item \textbf{API Native Streamer}: HTTP/3 and JSON at binary level; maps to tensors.
+\end{itemize}
+
+\subsection{Equilibrium Core (Optimizer)}
+\begin{itemize}
+  \item \textbf{Leon-Identity Scheduler}: Maintains equilibrium: workload $\Delta \rightarrow 0$ across CPU/GPU.
+  \item \textbf{MLIR Dialects}: Tensor, Contraction, Convolution dialects optimized for AI ops.
+  \item \textbf{Auto-Sharder}: Splits params across GPUs (mirror, shard, pipeline).
+\end{itemize}
+
+\subsection{Metal Backend (Hardware Abstraction)}
+\begin{itemize}
+  \item \textbf{JIT Kernel Generator}: Emits CUDA/ROCm/Metal-specialized kernels.
+  \item \textbf{Topology-Aware Controller}: Maps graph to physical interconnect (PCIe/NVLink/InfiniBand).
+  \item \textbf{Self-Healing Allocator}: Frees VRAM post-op; prevents fragmentation.
+\end{itemize}
+
+\section{Execution Flow}
+\begin{enumerate}
+  \item \textbf{Lowering \& Static Analysis}: Blueprint $\rightarrow$ graph, separate compute vs IO.
+  \item \textbf{Hardware Discovery}: Enumerate ranks (e.g., H100, M3).
+  \item \textbf{Equilibrium Mapping}: Choose split points honoring thermal and cost ceilings.
+  \item \textbf{Micro-Kernel Gen}: Emit target-specific binaries; cache hot paths.
+  \item \textbf{Streaming Execution}: vp.API streams directly to registers; live rebalancing on drift.
+\end{enumerate}
+
+\section{Logical Components}
+\begin{itemize}
+  \item \textbf{API Gateway} (\texttt{/api/train}, \texttt{/api/predict}, \texttt{/api/chatgpt})
+  \item \textbf{Registry}: Tracks datasets, runs, models, Blueprints, keys.
+  \item \textbf{Scheduler}: Equilibrium planner + autoscaler.
+  \item \textbf{Compiler Service}: MLIR+JIT; produces artifacts and one-binaries.
+  \item \textbf{Data Plane}: vp.API streamer (HTTP/3, JSON $\rightarrow$ tensors).
+  \item \textbf{Storage}: Artifacts, checkpoints, logs; encrypted at rest.
+  \item \textbf{Observability}: Loss/latency dashboards; thermal and cost alerts.
+\end{itemize}
+
+\section{Data Flow}
+\subsection{Training}
+\begin{enumerate}
+  \item User posts Blueprint to \texttt{/api/train}.
+  \item Parser $\rightarrow$ MLIR graph; Scheduler selects placement.
+  \item Compiler emits kernels; runtime streams dataset; metrics recorded.
+  \item Results stored in Registry; artifacts persisted.
+\end{enumerate}
+
+\subsection{Inference}
+\begin{enumerate}
+  \item Request to \texttt{/api/predict/\{job\_id\}}.
+  \item Weights auto-loaded; path chosen: local model or proxy LLM (with cost guardrails).
+  \item Output returned; telemetry logged.
+\end{enumerate}
+
+\section{Key Differentiators}
+\begin{itemize}
+  \item Equilibrium Scheduler (thermal/cost/latency balance).
+  \item Remote Layer routing (ChatGPT/Claude) with guardrails and fallbacks.
+  \item One-binary deploys for edge/mobile; no Python runtime.
+  \item Topology-aware auto-sharding; no manual DDP/FSDP wiring.
+  \item Built-in data streaming; fewer glue layers, lower overhead.
+\end{itemize}
+
+\section{API Surface (Current)}
+\begin{tabular}{p{0.25\textwidth} p{0.65\textwidth}}
+\texttt{GET /api/datasets} & List available datasets. \\
+\texttt{POST /api/train} & Body: \texttt{\{source: string\}}; returns \texttt{job\_id}. \\
+\texttt{GET /api/train/\{job\_id\}} & Poll status/history. \\
+\texttt{POST /api/predict/\{job\_id\}} & Body: feature array; returns prediction. \\
+\texttt{POST /api/chatgpt} & Proxy to OpenAI with key from .env; cost guardrails enforced. \\
+\end{tabular}
+
+\section{Deployment Topology}
+\begin{itemize}
+  \item \textbf{Frontend}: React/Vite; consumes REST; runs behind CDN.
+  \item \textbf{Backend}: Python FastAPI (api.py); stateless; autoscale.
+  \item \textbf{Workers}: GPU/CPU nodes running Compiler+Runtime.
+  \item \textbf{Storage}: Object store for artifacts; DB/kv for Registry.
+  \item \textbf{Secrets}: .env or vault; API keys injected at runtime.
+\end{itemize}
+
+\section{Security \& Privacy}
+\begin{itemize}
+  \item Encrypted workspaces; per-tenant isolation.
+  \item API keys never stored in code; pulled from env/vault at call time.
+  \item Guardrails: jailbreak sweeps, PII scrubs for LLM proxying.
+\end{itemize}
+
+\section{SLOs \& Observability}
+\begin{itemize}
+  \item Latency targets: $<$50\,ms p50 local inference (small models).
+  \item Training availability: 99.5\% (worker autoscale + queue).
+  \item Alerts: thermal drift, VRAM saturation, cost ceiling breach.
+\end{itemize}
+
+\section{Roadmap Highlights}
+\begin{itemize}
+  \item Data-profiler skill: schema inference + leakage checks.
+  \item Eval skill: automatic splits, metrics, bias checks.
+  \item Deployment skill: package one-binary for iOS/Android/Edge.
+\end{itemize}
+
+\section{Business Proposal}
+\subsection{Offer}
+\begin{itemize}
+  \item \textbf{Product}: Velox Proxima Equilibrium AI Engine (DSL, compiler, scheduler, observability, proxy routing).
+  \item \textbf{Delivery}: Cloud-hosted control plane + downloadable one-binaries for edge; optional on-prem/VPC.
+  \item \textbf{Support}: Community (Lite), Priority (Pro), 24/7 TAM (Max/Enterprise).
+\end{itemize}
+
+\subsection{Pricing Model}
+\begin{itemize}
+  \item \textbf{Subscription Tiers}: Lite (\$29/mo), Pro (\$89/mo), Max (\$179/mo) as per pricing page.
+  \item \textbf{Usage Add-ons}: GPU hours (A10/A100/H100 bands), token proxy (pass-through + margin), storage per GB.
+  \item \textbf{Enterprise}: \$3--6k/mo platform fee + usage; VPC/on-prem, custom SLAs, dedicated GPU pools.
+\end{itemize}
+
+\subsection{Value Proposition}
+\begin{itemize}
+  \item \textbf{Cost Control}: Equilibrium scheduler cuts idle GPU burn and enforces cost ceilings.
+  \item \textbf{Speed}: One-command runs; no CUDA/driver wrangling; auto-sharding for large models.
+  \item \textbf{Portability}: One-binary deploys for mobile/edge with Metal/CUDA/ROCm targets.
+  \item \textbf{Flexibility}: Route to local models or remote LLMs with guardrails; built-in data streaming.
+  \item \textbf{Safety}: PII/jailbreak sweeps, audit logs, isolated encrypted workspaces.
+\end{itemize}
+
+\subsection{Go-To-Market}
+\begin{itemize}
+  \item \textbf{ICP}: AI engineers, ML platform teams, startups needing hybrid local+cloud AI.
+  \item \textbf{Channels}: Self-serve SaaS, open-source Blueprints, enterprise pilots (60--90 days).
+  \item \textbf{Land \& Expand}: Start with team/feature pods; upsell to VPC/dedicated GPU pools.
+  \item \textbf{Partners}: GPU cloud providers, MLOps observability vendors, LLM providers (OpenAI/Anthropic).
+\end{itemize}
+
+\subsection{KPIs}
+\begin{itemize}
+  \item Activation: time-to-first-train $<$ 5 minutes.
+  \item Efficiency: GPU cost per training minute; equilibrium stability score.
+  \item Retention: weekly active Blueprints per account; Net Dollar Retention $>$120\%.
+  \item Reliability: training success rate; p50/p95 latency for inference.
+\end{itemize}
+
+\section{5-Year Valuation Scenarios (Illustrative)}
+Assumptions: replace the example starting ARR with current figures. Multiples compress as growth slows; Rule-of-40 improves over time.
+\begin{itemize}
+  \item \textbf{Starting ARR}: Example \$5M (swap with actual).
+  \item \textbf{Growth Paths}: High 120\% $\rightarrow$ 90\% $\rightarrow$ 70\% $\rightarrow$ 50\% $\rightarrow$ 35\%; Base 80\% $\rightarrow$ 60\% $\rightarrow$ 45\% $\rightarrow$ 35\% $\rightarrow$ 25\%; Low 50\% $\rightarrow$ 35\% $\rightarrow$ 25\% $\rightarrow$ 20\% $\rightarrow$ 15\%.
+  \item \textbf{ARR Multiples}: High 12--15$\times$ tapering to 8--10$\times$; Base 8--12$\times$ to 6--9$\times$; Low 5--8$\times$ to 4--6$\times$ as growth moderates.
+  \item \textbf{Levers}: NDR $>$120\%, gross margin $>$70\%, enterprise/VPC mix, strategic premium.
+\end{itemize}
+\subsection*{Illustrative Outcomes (with \$5M starting ARR)}
+\begin{tabular}{p{0.12\textwidth} p{0.25\textwidth} p{0.25\textwidth} p{0.25\textwidth}}
+Year & High (ARR, Valuation) & Base (ARR, Valuation) & Low (ARR, Valuation) \\
+\hline
+1 & \$11M; \~\$130M (12$\times$) & \$9M; \~\$80M (9$\times$) & \$7.5M; \~\$40M (5--6$\times$) \\
+2 & \$21M; \~\$210M (10$\times$) & \$14M; \~\$120M (8--9$\times$) & \$10M; \~\$55M (5--6$\times$) \\
+3 & \$36M; \~\$290--360M (8--10$\times$) & \$20M; \~\$150--200M (7--9$\times$) & \$12.5M; \~\$65--85M (5--6$\times$) \\
+4 & \$54M; \~\$380--540M (7--10$\times$) & \$27M; \~\$190--270M (7--9$\times$) & \$15M; \~\$70--100M (4.5--6.5$\times$) \\
+5 & \$73M; \~\$580--730M (8--10$\times$ if $>$35\% growth) & \$34M; \~\$240--340M (7--9$\times$) & \$17M; \~\$70--110M (4--6$\times$) \\
+\end{tabular}
+\subsection*{Move Up the Curve}
+\begin{itemize}
+  \item NDR $\geq$120\%, churn $<$8\% yearly.
+  \item Gross margin $\geq$70\% after GPU/token COGS.
+  \item Enterprise/VPC deals with multi-year prepay; dedicated GPU pools.
+  \item Moat: equilibrium scheduler, auto-sharding, one-binary edge deploys, proxy cost optimizer.
+\end{itemize}
+\subsection*{Risks / Downside Drivers}
+\begin{itemize}
+  \item NDR $<$110\% or top-customer concentration.
+  \item High COGS (GPU/token) compressing margin.
+  \item Growth $<$25\% with no profitability path.
+  \item Security/compliance gaps blocking enterprise.
+\end{itemize}
+
+\section{Appendix: Sample Blueprint}
+\begin{verbatim}
+layer Dense (INFER)
+layer Dense (3)
+train on sample_iris.csv
+loss cross_entropy
+epochs 5
+batch_size 16
+optimizer adamw lr=0.0008
+\end{verbatim}
+
+\end{document}

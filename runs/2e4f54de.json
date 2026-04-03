@@ -1,0 +1,64 @@
+{
+  "job_id": "2e4f54de",
+  "status": "completed",
+  "source": "# Logistic Regression baseline\nlayer Dense (INFER)\ntrain on mnist\nloss cross_entropy\noptimizer sgd lr=0.05\nbatch_size 32\nepochs 10\n",
+  "results": {
+    "history": [
+      {
+        "epoch": 1,
+        "loss": 1.2044062089664551,
+        "acc": 85.70666666666666
+      },
+      {
+        "epoch": 2,
+        "loss": 1.121793928922092,
+        "acc": 87.78
+      },
+      {
+        "epoch": 3,
+        "loss": 0.995623713080585,
+        "acc": 88.54833333333333
+      },
+      {
+        "epoch": 4,
+        "loss": 0.9353301297993787,
+        "acc": 88.73
+      },
+      {
+        "epoch": 5,
+        "loss": 0.8369011818777804,
+        "acc": 89.17833333333333
+      },
+      {
+        "epoch": 6,
+        "loss": 0.7991956006556244,
+        "acc": 89.03833333333333
+      },
+      {
+        "epoch": 7,
+        "loss": 0.7308476634757127,
+        "acc": 89.50833333333334
+      },
+      {
+        "epoch": 8,
+        "loss": 0.698924783337675,
+        "acc": 89.49166666666666
+      },
+      {
+        "epoch": 9,
+        "loss": 0.6610687625738793,
+        "acc": 89.7
+      },
+      {
+        "epoch": 10,
+        "loss": 0.6062049750590076,
+        "acc": 89.97166666666666
+      }
+    ],
+    "test_accuracy": 88.6,
+    "test_rmse": null,
+    "test_mae": null,
+    "total_time": 823.5902395248413
+  },
+  "timestamp": 1775169763.082159
+}

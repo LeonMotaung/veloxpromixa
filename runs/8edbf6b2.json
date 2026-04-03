@@ -1,0 +1,39 @@
+{
+  "job_id": "8edbf6b2",
+  "status": "completed",
+  "source": "layer Dense (INFER)\nlayer Dense (3)\ntrain on sample_iris.csv\nloss cross_entropy\nepochs 5\nbatch_size 16\n",
+  "results": {
+    "history": [
+      {
+        "epoch": 1,
+        "loss": 0.9791887760162353,
+        "acc": 63.333333333333336
+      },
+      {
+        "epoch": 2,
+        "loss": 0.9751413524150848,
+        "acc": 66.0
+      },
+      {
+        "epoch": 3,
+        "loss": 0.9471013247966766,
+        "acc": 65.33333333333333
+      },
+      {
+        "epoch": 4,
+        "loss": 0.9342360138893128,
+        "acc": 64.66666666666667
+      },
+      {
+        "epoch": 5,
+        "loss": 0.9176208436489105,
+        "acc": 64.66666666666667
+      }
+    ],
+    "test_accuracy": 64.66666666666667,
+    "test_rmse": null,
+    "test_mae": null,
+    "total_time": 0.4785933494567871
+  },
+  "timestamp": 1775130602.0207524
+}

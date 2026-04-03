@@ -232,38 +232,88 @@ def _load_dataset(name: str, batch_size: int):
         raise RuntimeError("[VP] PyTorch is required.")
 
     import os
-    if os.path.exists(name) and name.lower().endswith(".csv"):
+    valid_path = name
+    if not os.path.exists(valid_path):
+        alt = os.path.join("data", name)
+        if os.path.exists(alt):
+            valid_path = alt
+        elif os.path.exists(alt + ".csv"):
+            valid_path = alt + ".csv"
+
+    if os.path.exists(valid_path) and valid_path.lower().endswith(".csv"):
         try:
             import pandas as pd
-            import torch
-            df = pd.read_csv(name)
-            X = df.iloc[:, :-1].values
-            y = df.iloc[:, -1].values
-            
-            # Inference: categorical vs continuous
             import numpy as np
-            is_regr = not (y.dtype.kind in 'i' or (y.dtype.kind in 'f' and np.all(y == y.astype(int))))
+            import torch
+            try:
+                df = pd.read_csv(valid_path).dropna()
+            except Exception:
+                # Retry with flexible parser and skip bad lines
+                df = pd.read_csv(valid_path, sep=None, engine="python", on_bad_lines="skip").dropna()
+                print(f"[VP] CSV parser recovered {valid_path} with flexible separator/skip bad lines.")
+
+            # Downsample very large CSVs to keep demo runs responsive
+            if len(df) > 5000:
+                df = df.sample(n=5000, random_state=42).reset_index(drop=True)
             
-            if not is_regr:
-                unique_labels = np.unique(y)
-                label_map = {l: i for i, l in enumerate(unique_labels)}
-                y = np.array([label_map[l] for l in y])
-                num_outputs = len(unique_labels)
+            # Auto-clean: keep numeric features for X, keep target as-is (handle numeric and categorical)
+            target_col = df.columns[-1]
+            y_series = df[target_col]
+            
+            X_df = df.drop(columns=[target_col]).select_dtypes(include=[np.number])
+            # Encode non-numeric features in X if present
+            non_num_X = df.drop(columns=[target_col]).select_dtypes(exclude=[np.number])
+            if not non_num_X.empty:
+                for c in non_num_X.columns:
+                    X_df[c] = non_num_X[c].astype('category').cat.codes
+
+            if X_df.empty:
+                raise ValueError("Dataset has no usable features after encoding.")
+            X = X_df.values.astype(np.float32)
+            
+            from pandas.api import types as ptypes
+
+            # Inference: categorical vs continuous target
+            if not ptypes.is_numeric_dtype(y_series):
+                is_regr = False
+                labels = y_series.astype('category').cat.codes.values
+                num_outputs = int(y_series.nunique())
+                y = labels
                 y_type = torch.long
             else:
-                num_outputs = 1
-                y_type = torch.float32
-                y = y.reshape(-1, 1)
+                # numeric dtype
+                is_int = ptypes.is_integer_dtype(y_series)
+                if not is_int:
+                    is_regr = True
+                    num_outputs = 1
+                    y = y_series.to_numpy().reshape(-1, 1).astype(np.float32)
+                    y_type = torch.float32
+                else:
+                    is_regr = False
+                    labels = y_series.astype(int)
+                    num_outputs = int(np.unique(labels).shape[0])
+                    y = labels
+                    y_type = torch.long
 
-            from sklearn.preprocessing import StandardScaler
-            X = StandardScaler().fit_transform(X)
+            # Industrial Standardization (Zero-Dependency Fallback)
+            try:
+                from sklearn.preprocessing import StandardScaler
+                X = StandardScaler().fit_transform(X)
+            except ImportError:
+                print("[VP] Scikit-Learn not found. Switching to Industrial NumPy Scalar.")
+                mean = X.mean(axis=0)
+                std = X.std(axis=0)
+                std[std == 0] = 1.0
+                X = (X - mean) / std
             
             from torch.utils.data import TensorDataset, DataLoader
             ds = TensorDataset(torch.tensor(X, dtype=torch.float32), torch.tensor(y, dtype=y_type))
             loader = DataLoader(ds, batch_size=batch_size, shuffle=True)
+            if len(loader) == 0:
+                raise ValueError("Dataset has no rows after cleaning.")
             return loader, loader, X.shape[1], num_outputs
         except Exception as e:
-            print(f"[VP] CSV Load Error: {e}")
+            raise ValueError(f"[VP] CSV Load Error for {valid_path}: {e}")
 
     name = name.lower()
 
@@ -374,7 +424,7 @@ def _load_dataset(name: str, batch_size: int):
 
 
     else:
-        raise ValueError(f"[VP] Unknown dataset: {name!r}. Available: mnist, cifar10, iris, fashion_mnist")
+        raise ValueError(f"[VP] Unknown dataset: {name!r}. Available: mnist, cifar10, iris, fashion_mnist or any CSV in ./data")
 
 
 # ── Loss resolver ──────────────────────────────────────────────────────────
@@ -444,6 +494,12 @@ class Executor:
         train_loader, test_loader, input_shape, num_classes = _load_dataset(
             self.graph.dataset, self.graph.batch_size
         )
+
+        # If a Conv2D layer exists but the dataset is tabular (1D), lift it to a 4D shape (C,H,W) = (1,1,features)
+        has_conv = any(n.node_type == NodeType.CONV2D for n in self.graph.nodes)
+        if isinstance(input_shape, int) and has_conv:
+            input_shape = (1, 1, input_shape)
+
         # If input_shape is (C, H, W), total flat size is product
         input_size = input_shape if isinstance(input_shape, int) else (input_shape[0]*input_shape[1]*input_shape[2])
 
@@ -481,6 +537,37 @@ class Executor:
         with torch.no_grad():
             model(dummy_x)
 
+        # Ensure classification head matches number of classes
+        def _ensure_classification_head(m, num_classes: int):
+            import torch.nn as nn
+            for idx in range(len(m) - 1, -1, -1):
+                layer = m[idx]
+                if isinstance(layer, (nn.Linear, nn.LazyLinear)):
+                    in_feats = getattr(layer, "in_features", None)
+                    out_feats = getattr(layer, "out_features", None)
+                    if in_feats is None:
+                        continue
+                    if out_feats != num_classes:
+                        m[idx] = nn.Linear(in_feats, num_classes)
+                    break
+            return m
+
+        if num_classes > 1:
+            model = _ensure_classification_head(model, num_classes)
+        else:
+            # regression: ensure final out features = 1
+            import torch.nn as nn
+            for idx in range(len(model) - 1, -1, -1):
+                layer = model[idx]
+                if isinstance(layer, (nn.Linear, nn.LazyLinear)):
+                    in_feats = getattr(layer, "in_features", None)
+                    out_feats = getattr(layer, "out_features", None)
+                    if in_feats is None:
+                        continue
+                    if out_feats != 1:
+                        model[idx] = nn.Linear(in_feats, 1)
+                    break
+
 
         elapsed = time.time() - t_start
 
@@ -488,12 +575,24 @@ class Executor:
         self._log(f"[VP] Parameters: {sum(p.numel() for p in model.parameters()):,}")
 
 
+        is_regression = num_classes == 1
         # ── Optimizer & loss
         optimizer = _get_optimizer(
             self.graph.optimizer_name,
             model.parameters(),
             self.graph.optimizer_hparams,
         )
+
+        # If we inferred dataset metadata, align loss choice to task
+        if not is_regression:
+            if not self.graph.loss or self.graph.loss.lower() in ("mse", "bce"):
+                self._log("[VP] Loss auto-set to cross_entropy for classification task.")
+                self.graph.loss = "cross_entropy"
+        else:
+            if not self.graph.loss or self.graph.loss.lower() == "cross_entropy":
+                self._log("[VP] Loss auto-set to mse for regression task.")
+                self.graph.loss = "mse"
+
         criterion = _get_loss_fn(self.graph.loss)
 
         # ── Leon Identity LR schedule
@@ -501,8 +600,6 @@ class Executor:
         meta = getattr(self.graph, "_metadata", {})
         if meta.get("leon_identity_applied") and lr_schedule:
             self._log("[VP] Leon Identity LR schedule active. Equilibrium stable.")
-
-        is_regression = num_classes == 1
 
 
         # ── Training loop
@@ -579,13 +676,23 @@ class Executor:
                     correct += (preds == batch_y).sum().item()
                     all_preds.extend(preds.cpu().tolist())
                 else:
-                    all_preds.extend(out.cpu().tolist())
-                all_labels.extend(batch_y.cpu().tolist())
+                    all_preds.extend(out.cpu().view(-1).tolist())
+                all_labels.extend(batch_y.cpu().view(-1).tolist())
                 total += batch_y.size(0)
 
         test_acc = 100.0 * correct / total if total > 0 and not is_regression else 0.0
+        test_rmse = None
+        test_mae = None
+        if is_regression and total > 0:
+            import numpy as np
+            arr_pred = np.array(all_preds, dtype=float)
+            arr_true = np.array(all_labels, dtype=float)
+            test_rmse = float(np.sqrt(np.mean((arr_pred - arr_true) ** 2)))
+            test_mae = float(np.mean(np.abs(arr_pred - arr_true)))
         if not is_regression:
             self._log(f"\n[VP] {eval_label} Accuracy: {test_acc:.2f}%")
+        else:
+            self._log(f"\n[VP] {eval_label} Regression: RMSE={test_rmse:.4f}, MAE={test_mae:.4f}")
 
         # Per-class breakdown (up to 10 classes)
         if self.graph.eval_split and not is_regression:
@@ -623,6 +730,8 @@ class Executor:
             "model": model,
             "history": results,
             "test_accuracy": test_acc,
+            "test_rmse": test_rmse,
+            "test_mae": test_mae,
             "total_time": total_time,
         }
 
@@ -699,4 +808,3 @@ class Executor:
             self._log("[VP] Displaying plot ...")
             plt.show()
         plt.close(fig)
-

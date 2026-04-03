@@ -1,0 +1,24 @@
+{
+  "job_id": "892f3a6c",
+  "status": "completed",
+  "source": "layer Dense (INFER)\nlayer Dense (1)\ntrain on Housing.csv\nloss mse\nepochs 2\nbatch_size 16",
+  "results": {
+    "history": [
+      {
+        "epoch": 1,
+        "loss": 1.1082599180085317,
+        "acc": 40.36697247706422
+      },
+      {
+        "epoch": 2,
+        "loss": 1.0623327817235675,
+        "acc": 42.75229357798165
+      }
+    ],
+    "test_accuracy": 44.22018348623853,
+    "test_rmse": null,
+    "test_mae": null,
+    "total_time": 10.472397565841675
+  },
+  "timestamp": 1775130033.4436495
+}

@@ -1,0 +1,17 @@
+{
+  "job_id": "5b359215",
+  "status": "completed",
+  "source": "layer Dense (INFER)\nlayer Dense (1)\ntrain on test.csv\nloss mse\nepochs 1\nbatch_size 4",
+  "results": {
+    "history": [
+      {
+        "epoch": 1,
+        "loss": 0.3540533483028412,
+        "acc": 0.0
+      }
+    ],
+    "test_accuracy": 0.0,
+    "total_time": 15.757502317428589
+  },
+  "timestamp": 1775126038.6708217
+}

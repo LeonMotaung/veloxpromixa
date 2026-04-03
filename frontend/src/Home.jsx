@@ -1,322 +1,108 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { 
-  Zap, 
-  Cpu, 
-  Shield, 
-  ChevronRight, 
-  Activity, 
-  Database,
-  Terminal,
-  Grid,
-  Sparkles,
-  Smartphone,
-  Cloud,
-  MessageSquare,
-  Globe,
-  Settings,
-  Layout,
-  Sun,
-  Moon,
-  Github,
-  Award,
-  ChevronDown,
-  ExternalLink,
-  Code2
-} from 'lucide-react';
+import { ChevronRight, Zap, Sparkles, Shield, Cpu } from 'lucide-react';
+import GlassNavbar from './components/GlassNavbar';
+import Footer from './components/Footer';
+
+const features = [
+  { icon: <Zap size={24} />, title: 'Equilibrium Scheduler', desc: 'Balances cost, latency, and thermal load across local + cloud automatically.' },
+  { icon: <Sparkles size={24} />, title: 'One-Command Deploy', desc: 'Train a Blueprint, get an endpoint + cURL instantly—no MLOps glue.' },
+  { icon: <Shield size={24} />, title: 'Guardrails & Observability', desc: 'Cost caps, jailbreak sweeps, live loss/latency dashboards out of the box.' },
+  { icon: <Cpu size={24} />, title: 'One-Binary Edge', desc: 'Compile to native binaries for Metal/CUDA/ROCm—zero Python runtime.' },
+];
 
 export default function Home() {
   const [theme, setTheme] = useState(localStorage.getItem('theme') || 'dark');
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
     localStorage.setItem('theme', theme);
   }, [theme]);
 
+  useEffect(() => {
+    const onResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
+
   const toggleTheme = () => setTheme(theme === 'dark' ? 'light' : 'dark');
 
   return (
-    <div style={{ position: 'relative' }}>
-      
-      {/* Theme Toggle Button - Fixed Top Right */}
-      <div style={{ position: 'fixed', top: '24px', right: '32px', zIndex: 100 }}>
-         <button 
-           onClick={toggleTheme}
-           style={{ 
-             background: 'var(--glass)', 
-             border: '1px solid var(--border)', 
-             color: 'var(--text)', 
-             width: '40px', 
-             height: '40px', 
-             borderRadius: '50%',
-             display: 'flex',
-             alignItems: 'center',
-             justifyContent: 'center',
-             cursor: 'pointer',
-             backdropFilter: 'blur(8px)',
-             transition: 'transform 0.2s cubic-bezier(0.4, 0, 0.2, 1)'
-           }}
-           className="theme-btn"
-         >
-           {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
-         </button>
-      </div>
+    <div style={{ position: 'relative', background: 'var(--background)', color: 'var(--text)' }}>
+      <GlassNavbar theme={theme} toggleTheme={toggleTheme} />
 
-      {/* Navbar */}
-      <nav className="container" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '32px 0' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <img 
-            src={theme === 'dark' ? '/images/onblack.png' : '/images/onwhite.png'} 
-            alt="Velox Logo" 
-            style={{ width: '32px', height: '32px', objectFit: 'contain' }}
-          />
-          <span style={{ fontWeight: 800, fontSize: '20px', letterSpacing: '-1px' }}>VELOX <span style={{ color: 'var(--primary)' }}>PROXIMA</span></span>
-        </div>
-        <div style={{ display: 'flex', gap: '32px', fontSize: '14px', fontWeight: 600, opacity: 0.8 }}>
-          <Link to="/docs/DSL_GUIDE" style={{ color: 'var(--text)', textDecoration: 'none' }}>DOCUMENTATION</Link>
-          <Link to="/dashboard" style={{ color: 'var(--primary)', textDecoration: 'none' }}>LAUNCH DASHBOARD</Link>
-        </div>
-      </nav>
-
-      {/* Hero Section */}
-      <section className="container" style={{ marginTop: '10vh', textAlign: 'center' }}>
-          <div className="btn-primary" style={{ display: 'inline-flex', padding: '8px 16px', borderRadius: '40px', fontSize: '12px', marginBottom: '32px', letterSpacing: '1px', opacity: 0.9 }}>
-            {theme === 'dark' ? 'NIGHT MODE ACTIVE' : 'DAY MODE READY'}
-          </div>
-          
-          <h1 style={{ fontSize: '72px', fontWeight: 800, margin: 0, letterSpacing: '-4px', lineHeight: 1.0 }}>
-            The AI Engine That <br />
-            <span className="purple-gradient-text">Actually Thinks</span> First.
-          </h1>
-          
-          <p style={{ fontSize: '20px', color: 'var(--text-muted)', marginTop: '32px', maxWidth: '650px', margin: '32px auto 0', lineHeight: 1.6 }}>
-            Velox Proxima is an enterprise-grade declarative AI ecosystem. 
-            Write human-readable Blueprints, solve neural geometry instantly, and scale your agents everywhere.
-          </p>
-
-          <div style={{ display: 'flex', gap: '16px', justifyContent: 'center', marginTop: '48px' }}>
-            <Link to="/dashboard" className="btn-primary" style={{ padding: '16px 40px', fontSize: '18px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              GET STARTED <ChevronRight size={20} />
-            </Link>
-          </div>
-      </section>
-
-      {/* Quick Start Card */}
-      <section className="container" style={{ marginTop: '10vh' }}>
-          <div className="glass-panel" style={{ padding: '40px', maxWidth: '800px', margin: '0 auto' }}>
-             <div style={{ display: 'flex', gap: '16px', marginBottom: '24px', opacity: 0.6, fontSize: '12px', fontWeight: 800, letterSpacing: '2px' }}>
-                 <span>QUICK START</span>
-                 <span>ONE-LINER</span>
-                 <span style={{ color: 'var(--primary)' }}>POWERSHELL / TERMINAL</span>
-             </div>
-             <div style={{ fontSize: '24px', fontWeight: 800, marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <span style={{ color: 'var(--primary)' }}>⟩</span> Works everywhere. Installs everything. <Shield size={24} color="var(--primary)" />
-             </div>
-             <pre style={{ 
-               background: '#000', 
-               padding: '24px', 
-               borderRadius: '12px', 
-               color: 'var(--accent)', 
-               fontFamily: 'Fira Code', 
-               fontSize: '14px',
-               border: '1px solid var(--border)',
-               overflow: 'hidden',
-               whiteSpace: 'pre-wrap'
-             }}>
-                powershell -c "irm https://veloxproxima.ai/install.ps1 | iex"
-             </pre>
-             <p style={{ marginTop: '24px', fontSize: '14px', opacity: 0.6 }}>
-                Works on macOS, Windows & Linux. The one-liner installs Node.js, Python, and the Velox Compiler for you.
-             </p>
-          </div>
-      </section>
-
-      {/* [BETA SECTION] */}
-      <section className="container" style={{ marginTop: '10vh' }}>
-          <div style={{ textAlign: 'center', marginBottom: '60px' }}>
-              <div style={{ fontSize: '40px', fontWeight: 800, color: 'var(--primary)', marginBottom: '8px' }}>β</div>
-              <h2 style={{ fontSize: '32px', fontWeight: 800 }}>Engine Beta Capability</h2>
-          </div>
-
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '32px' }}>
-             <FeatureCard 
-               icon={<Smartphone size={32} />} 
-               title="Runs on Your Machine" 
-               desc="Private by default. Works with Anthropic, OpenAI, or 100% local models. Your data stays yours." 
-             />
-             <FeatureCard 
-               icon={<MessageSquare size={32} />} 
-               title="Any Chat App" 
-               desc="Talk to Velox on WhatsApp, Discord, Slack, or Telegram. Works in DMs and group shards." 
-             />
-             <FeatureCard 
-               icon={<Database size={32} />} 
-               title="Persistent Memory" 
-               desc="The engine remembers you and becomes uniquely yours. Your preferences, your context, your AI." 
-             />
-             <FeatureCard 
-               icon={<Globe size={32} />} 
-               title="Browser Control" 
-               desc="Automate the web. Extract data, fill forms, and browse with deterministic precision." 
-             />
-             <FeatureCard 
-               icon={<Settings size={32} />} 
-               title="Full System Access" 
-               desc="Read and write files, run shell commands, execute scripts. Secure or sandboxed—your choice." 
-             />
-             <FeatureCard 
-               icon={<Sparkles size={32} />} 
-               title="Skills & Plugins" 
-               desc="Extend with the Sieve registry or build your own. The engine can even learn new methods dynamically." 
-             />
-          </div>
-      </section>
-
-      {/* Integrations Marquee */}
-      <section style={{ marginTop: '15vh', backgroundColor: 'var(--background-alt)', padding: '80px 0', borderTop: '1px solid var(--border)' }}>
-          <div className="container" style={{ textAlign: 'center', marginBottom: '40px' }}>
-             <h3 style={{ fontSize: '12px', fontWeight: 800, letterSpacing: '4px', opacity: 0.4 }}>WORKS WITH EVERYTHING</h3>
-          </div>
-          <div style={{ overflow: 'hidden', whiteSpace: 'nowrap', display: 'flex' }}>
-             <MarqueeRow 
-               items={['WhatsApp','Telegram','Discord','Slack','Signal','Claude','GPT','Spotify','Obsidian','GitHub','VS Code']} 
-             />
-          </div>
-          <div className="container" style={{ marginTop: '40px', textAlign: 'center' }}>
-             <Link to="/docs" style={{ color: 'var(--primary)', fontWeight: 600, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
-                View all 50+ integrations <ChevronRight size={16} />
-             </Link>
-          </div>
-      </section>
-
-      {/* Featured In / Testimonials */}
-      <section className="container" style={{ marginTop: '15vh' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '48px' }}>
-             <Testimonial 
-               author="Federico Viticci" 
-               role="MacStories" 
-               quote="Velox showed me what the future of personal AI assistants looks like." 
-             />
-             <Testimonial 
-               author="Jim Mendenhall" 
-               role="StarryHope" 
-               quote="The future of private AI: Why developers are scaling local clusters for Velox." 
-             />
-          </div>
-      </section>
-
-      {/* CTA Footer */}
-      <section style={{ marginTop: '15vh', borderTop: '1px solid var(--border)', padding: '100px 0 60px' }}>
-          <div className="container" style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '40px' }}>
-             <div style={{ gridColumn: 'span 2' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '24px' }}>
-                  <Activity size={24} color="var(--primary)" />
-                  <span style={{ fontWeight: 800, fontSize: '20px' }}>VELOX</span>
-                </div>
-                <p style={{ opacity: 0.5, fontSize: '14px', lineHeight: 1.6 }}>
-                  Built by Space Lobster AI with a soul. Independent project focused on privacy and performance. 
-                  Not affiliated with Anthropic. Formerly known as Proxima.
-                </p>
-             </div>
-             
-             <FooterCol title="Community" links={[
-               {name: 'Discord', href: '#'},
-               {name: 'GitHub', href: '#'},
-               {name: 'ClawHub', href: '#'}
-             ]} />
-             
-             <FooterCol title="Resources" links={[
-               {name: 'Documentation', href: '/docs'},
-               {name: 'Benchmarks', href: '#'},
-               {name: 'Registry', href: '#'}
-             ]} />
-
-             <div>
-                <h4 style={{ fontSize: '12px', fontWeight: 800, marginBottom: '20px', letterSpacing: '1px' }}>STAY IN THE LOOP</h4>
-                <div style={{ display: 'flex', gap: '8px' }}>
-                   <input 
-                     placeholder="your@email.com" 
-                     style={{ background: 'var(--glass)', border: '1px solid var(--border)', color: 'white', padding: '12px', borderRadius: '8px', fontSize: '14px', flex: 1 }} 
-                   />
-                   <button className="btn-primary" style={{ padding: '0 16px' }}><ChevronRight size={20} /></button>
-                </div>
-             </div>
-          </div>
-
-          {/* Sponsors */}
-          <div className="container" style={{ marginTop: '80px', paddingTop: '40px', borderTop: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', opacity: 0.4 }}>
-             <div style={{ display: 'flex', gap: '40px', fontSize: '12px', fontWeight: 800 }}>
-                <span>NVIDIA</span>
-                <span>VERCEL</span>
-                <span>CONVEX</span>
-                <span>OPENAI</span>
-             </div>
-             <div style={{ fontSize: '11px' }}>Built by Peter Steinberger & Community.</div>
-          </div>
-      </section>
-
-      <style>{`
-        .theme-btn:hover { transform: scale(1.1); }
-        @keyframes marquee { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
-        .purple-gradient-text {
-            background: linear-gradient(to right, var(--text), var(--primary));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-      `}</style>
-    </div>
-  );
-}
-
-function FeatureCard({ icon, title, desc }) {
-  return (
-    <div className="glass-panel" style={{ padding: '32px' }}>
-       <div style={{ color: 'var(--primary)', marginBottom: '24px' }}>{icon}</div>
-       <h3 style={{ fontSize: '20px', fontWeight: 800, marginBottom: '16px' }}>{title}</h3>
-       <p style={{ opacity: 0.6, fontSize: '14px', lineHeight: 1.6 }}>{desc}</p>
-    </div>
-  );
-}
-
-function Testimonial({ author, role, quote }) {
-  return (
-    <div>
-       <div style={{ fontSize: '24px', fontWeight: 600, marginBottom: '24px', fontStyle: 'italic', opacity: 0.9 }}>
-          "{quote}"
-       </div>
-       <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'var(--primary)' }}></div>
+      <main>
+        {/* Hero */}
+        <section className="container" style={{ marginTop: '8vh', display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1.05fr 0.95fr', gap: '32px', alignItems: 'center' }}>
           <div>
-            <div style={{ fontWeight: 800, fontSize: '14px' }}>{author}</div>
-            <div style={{ fontSize: '12px', opacity: 0.5 }}>{role}</div>
+            <div className="btn-primary" style={{ display: 'inline-flex', padding: '8px 16px', borderRadius: '40px', fontSize: '12px', marginBottom: '16px', letterSpacing: '1px', opacity: 0.9 }}>
+              {theme === 'dark' ? 'NIGHT MODE ACTIVE' : 'DAY MODE READY'}
+            </div>
+            <h1 style={{ fontSize: isMobile ? '46px' : '64px', fontWeight: 800, margin: 0, letterSpacing: '-2px', lineHeight: 1.05 }}>
+              Velox Proxima.<br /> Deploy AI without the ops tax.
+            </h1>
+            <p style={{ fontSize: '18px', color: 'var(--text-muted)', marginTop: '18px', maxWidth: '620px', lineHeight: 1.6 }}>
+              Train, route, and deploy from one Blueprint. Equilibrium keeps GPUs cool, bills low, and latency tight—whether you’re on laptop, cluster, or edge.
+            </p>
+            <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginTop: '22px' }}>
+              <Link to="/dashboard" className="btn-primary" style={{ padding: '14px 28px', fontSize: '16px', display: 'flex', alignItems: 'center', gap: '8px', textDecoration: 'none' }}>
+                Launch Dashboard <ChevronRight size={18} />
+              </Link>
+              <Link to="/docs" style={{ textDecoration: 'none', border: '1px solid var(--border)', padding: '12px 18px', borderRadius: '12px', color: 'var(--text)', background: 'var(--glass)', display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
+                View DSL Docs
+              </Link>
+            </div>
           </div>
-       </div>
-    </div>
-  );
-}
 
-function MarqueeRow({ items }) {
-  const repeated = [...items, ...items, ...items];
-  return (
-    <div style={{ display: 'flex', animation: 'marquee 40s linear infinite' }}>
-      {repeated.map((item, i) => (
-        <span key={i} style={{ fontSize: '24px', fontWeight: 800, margin: '0 40px', opacity: 0.6 }}>
-          {item}
-        </span>
-      ))}
-    </div>
-  );
-}
+          {/* Hero visual */}
+          <div className="glass-panel" style={{ padding: isMobile ? '14px' : '18px', borderRadius: '20px', backdropFilter: 'blur(16px)', boxShadow: '0 30px 70px rgba(0,0,0,0.35)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
+              <span style={{ width: 10, height: 10, borderRadius: '50%', background: '#22c55e', boxShadow: '0 0 0 6px rgba(34,197,94,0.18)' }}></span>
+              <span style={{ fontFamily: 'Fira Code, monospace', fontSize: '12px', color: 'var(--text-muted)' }}>Equilibrium Console</span>
+            </div>
+            <div className="glass-panel" style={{ padding: '12px', marginBottom: '10px', borderRadius: '14px' }}>
+              <div style={{ fontFamily: 'Fira Code, monospace', fontSize: '12px', color: 'var(--text)' }}>
+                grid &#123; encoder: local, decoder: gpu0 &#125;<br />
+                cost_ceiling = $0.08/run<br />
+                thermal_guard = on<br />
+                route chat =&gt; local | ChatGPT proxy (guardrails)
+              </div>
+            </div>
+            <div className="glass-panel" style={{ padding: '12px', borderRadius: '14px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <div style={{ fontFamily: 'Fira Code, monospace', fontSize: '12px', color: 'var(--text)' }}>layer Conv2D (32, 3)</div>
+              <div style={{ fontFamily: 'Fira Code, monospace', fontSize: '12px', color: 'var(--text)' }}>layer Dense (INFER)</div>
+              <div style={{ fontFamily: 'Fira Code, monospace', fontSize: '12px', color: 'var(--text)' }}>train on sample_iris.csv</div>
+              <div style={{ fontFamily: 'Fira Code, monospace', fontSize: '12px', color: 'var(--text)' }}>optimizer adamw lr=0.0008</div>
+              <div style={{ marginTop: '6px', display: 'flex', gap: '8px' }}>
+                <span className="btn-primary" style={{ padding: '8px 12px', fontSize: '12px' }}>Run</span>
+                <span className="btn-primary" style={{ padding: '8px 12px', fontSize: '12px', background: 'var(--background)', color: 'var(--text)', border: '1px solid var(--border)' }}>Deploy</span>
+              </div>
+            </div>
+          </div>
+        </section>
 
-function FooterCol({ title, links }) {
-  return (
-    <div>
-       <h4 style={{ fontSize: '12px', fontWeight: 800, marginBottom: '24px', letterSpacing: '1px' }}>{title.toUpperCase()}</h4>
-       <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-          {links.map(l => (
-            <Link key={l.name} to={l.href} style={{ color: 'var(--text-muted)', textDecoration: 'none', fontSize: '14px' }}>{l.name}</Link>
-          ))}
-       </div>
+        {/* Features */}
+        <section className="container" style={{ marginTop: '14vh' }}>
+          <div style={{ textAlign: 'center', marginBottom: '28px' }}>
+            <div style={{ fontSize: '14px', letterSpacing: '2px', fontWeight: 700, opacity: 0.6 }}>WHY VELOX</div>
+            <h2 style={{ fontSize: isMobile ? '26px' : '32px', fontWeight: 800, margin: '6px 0 0' }}>Speed, control, and lower GPU bills.</h2>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '14px' }}>
+            {features.map((f) => (
+              <div key={f.title} className="glass-panel" style={{ padding: '14px', borderRadius: '14px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <div style={{ width: 36, height: 36, borderRadius: '10px', background: 'var(--glass)', display: 'grid', placeItems: 'center', color: 'var(--primary)' }}>
+                  {f.icon}
+                </div>
+                <div style={{ fontWeight: 700 }}>{f.title}</div>
+                <div style={{ fontSize: '13px', color: 'var(--text-muted)', lineHeight: 1.5 }}>{f.desc}</div>
+              </div>
+            ))}
+          </div>
+        </section>
+      </main>
+
+      <Footer />
     </div>
   );
 }

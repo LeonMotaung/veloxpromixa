@@ -1,11 +1,14 @@
 import uuid
 import threading
+import os
 from typing import Dict, List, Optional
 from fastapi import FastAPI, BackgroundTasks, HTTPException, UploadFile, File
+from fastapi.responses import FileResponse, JSONResponse
 from pydantic import BaseModel
 from pathlib import Path
 import json
 import time
+from openai import OpenAI
 
 from velox.runtime import VeloxRuntime
 
@@ -16,9 +19,60 @@ jobs: Dict[str, dict] = {}
 models: Dict[str, dict] = {}
 
 
+def _load_env_file():
+    """
+    Minimal .env loader (no external dependency).
+    Looks for a .env file in the project root and injects vars if not already set.
+    """
+    env_path = Path(".env")
+    if not env_path.exists():
+        return
+    for line in env_path.read_text(encoding="utf-8").splitlines():
+        line = line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, val = line.split("=", 1)
+        key = key.strip()
+        val = val.strip().strip('"').strip("'")
+        if key and key not in os.environ:
+            os.environ[key] = val
+
+
+_load_env_file()
+
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+openai_client = OpenAI(api_key=OPENAI_API_KEY) if OPENAI_API_KEY else None
+
+# Rehydrate past runs into memory (status only) so endpoints remain useful after restart.
+def _rehydrate_jobs():
+    runs_dir = Path("runs")
+    if not runs_dir.exists():
+        return
+    for f in runs_dir.glob("*.json"):
+        try:
+            with open(f, "r") as rfile:
+                data = json.load(rfile)
+                jobs[data["job_id"]] = {
+                    "status": data.get("status", "completed"),
+                    "source": data.get("source", ""),
+                    "results": data.get("results", {})
+                }
+        except Exception:
+            continue
+
+_rehydrate_jobs()
+
+
 class VPSource(BaseModel):
     source: str
     job_id: Optional[str] = None
+
+
+class ChatRequest(BaseModel):
+    prompt: str
+    model: str = "gpt-4o-mini"
+    temperature: float = 0.3
+    max_tokens: int = 400
 
 
 @app.get("/")
@@ -29,10 +83,27 @@ def read_root():
         "message": "Declarative AI Engine Serving Layer active."
     }
 
+@app.post("/api/chatgpt")
+async def chatgpt(req: ChatRequest):
+    if not openai_client:
+        raise HTTPException(status_code=400, detail="OPENAI_API_KEY not set on server")
+    try:
+        resp = openai_client.chat.completions.create(
+            model=req.model,
+            messages=[{"role": "user", "content": req.prompt}],
+            temperature=req.temperature,
+            max_tokens=req.max_tokens,
+            stream=False,
+        )
+        reply = resp.choices[0].message.content
+        return {"reply": reply}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 
 @app.post("/api/upload")
 async def upload_dataset(file: UploadFile = File(...)):
-    """Upload a data file to the data/ directory."""
+    """Upload a data file to the data/ directory and return a quick schema summary."""
     allowed = ('.csv', '.json', '.pt', '.pth', '.txt', '.npz')
     if not file.filename.lower().endswith(allowed):
         raise HTTPException(status_code=400, detail=f"File type not allowed. Use: {allowed}")
@@ -45,8 +116,53 @@ async def upload_dataset(file: UploadFile = File(...)):
     with open(file_path, "wb") as f:
         content = await file.read()
         f.write(content)
+    
+    summary = {"rows": None, "columns": [], "target": None, "numeric_features": 0, "non_numeric_features": 0}
+
+    # [INDUSTRIAL SIEVE] Pre-clean data at the Edge before saving to Vault
+    if file_path.suffix.lower() == '.csv':
+        try:
+            import pandas as pd
+            import numpy as np
+            # Read fresh upload
+            df = pd.read_csv(file_path)
+            
+            # 1. Clean Headers
+            df.columns = df.columns.str.strip()
+            
+            # 2. Isolate Target Space
+            target_col = df.columns[-1]
+            target_data = df[target_col]
+            X_df = df.drop(columns=[target_col])
+            
+            # 3. Numeric Sieve: Fill missing with Median
+            numeric_cols = X_df.select_dtypes(include=[np.number]).columns
+            if not numeric_cols.empty:
+                X_df[numeric_cols] = X_df[numeric_cols].fillna(X_df[numeric_cols].median())
+            
+            # 4. Syntactic Sieve: Encode remaining categorical features & fill blanks
+            cat_cols = X_df.select_dtypes(exclude=[np.number]).columns
+            for c in cat_cols:
+                X_df[c] = X_df[c].fillna(X_df[c].mode()[0] if not X_df[c].mode().empty else 'Unknown')
+                # Autonomously convert strings to integers for neural compatibility
+                X_df[c] = X_df[c].astype('category').cat.codes
+                
+            # 5. Reconstruct Graph Matrix
+            df_clean = pd.concat([X_df, target_data], axis=1).dropna(subset=[target_col])
+
+            summary["rows"] = len(df_clean)
+            summary["columns"] = list(df_clean.columns)
+            summary["target"] = target_col
+            summary["numeric_features"] = len(X_df.columns)
+            summary["non_numeric_features"] = len(cat_cols)
+
+            # Overwrite original upload with the Densified Matrix
+            df_clean.to_csv(file_path, index=False)
+            print(f"[VP] Sieve Complete: {file.filename} normalized to dense numeric matrix.")
+        except Exception as e:
+            print(f"[VP] Vault Upload Cleaning Warn: {e}")
         
-    return {"filename": file.filename, "path": str(file_path)}
+    return {"filename": file.filename, "path": str(file_path), "summary": summary}
 
 
 def train_worker(job_id: str, source: str):
@@ -69,6 +185,8 @@ def train_worker(job_id: str, source: str):
         # Merge final results
         jobs[job_id]["results"].update({
             "test_accuracy": results.get("test_accuracy"),
+            "test_rmse": results.get("test_rmse"),
+            "test_mae": results.get("test_mae"),
             "total_time": results.get("total_time")
         })
         
@@ -95,6 +213,8 @@ def train_worker(job_id: str, source: str):
     except Exception as e:
         jobs[job_id]["status"] = "failed"
         jobs[job_id]["error"] = str(e)
+        import traceback
+        traceback.print_exc()
 
 
 @app.get("/api/runs")
@@ -109,6 +229,70 @@ async def list_runs():
                 runs.append(json.load(rfile))
         except: continue
     return sorted(runs, key=lambda x: x.get('timestamp', 0), reverse=True)
+
+
+@app.get("/api/runs/{job_id}/download")
+async def download_run(job_id: str, artifact: str = "run"):
+    """
+    Download run artifacts:
+      - artifact=run  -> runs/{job_id}.json
+      - artifact=model -> models/{job_id}.pt
+    """
+    if artifact not in ("run", "model"):
+        raise HTTPException(status_code=400, detail="artifact must be 'run' or 'model'")
+
+    base = Path("runs" if artifact == "run" else "models")
+    ext = ".json" if artifact == "run" else ".pt"
+    path = base / f"{job_id}{ext}"
+    if not path.exists():
+        raise HTTPException(status_code=404, detail=f"{artifact} not found for job {job_id}")
+    media_type = "application/json" if artifact == "run" else "application/octet-stream"
+    return FileResponse(path, media_type=media_type, filename=path.name)
+
+
+@app.get("/api/datasets")
+async def list_datasets():
+    """List available datasets (CSV files) under data/ with quick schema metadata."""
+    data_dir = Path("data")
+    if not data_dir.exists():
+        return []
+
+    datasets = []
+    for f in data_dir.glob("*.csv"):
+        meta = {
+            "rows": None,
+            "num_features": None,
+            "target_type": None,
+            "num_classes": None,
+        }
+        try:
+            import pandas as pd
+            import numpy as np
+            df = pd.read_csv(f, nrows=500)  # quick peek
+            if not df.empty:
+                target_col = df.columns[-1]
+                X_df = df.drop(columns=[target_col]).select_dtypes(include=[np.number])
+                meta["rows"] = len(df)
+                meta["num_features"] = len(X_df.columns)
+                target = df[target_col]
+                is_numeric = np.issubdtype(target.dtype, np.number)
+                is_regr = is_numeric and not np.all(target == target.astype(int))
+                if is_regr:
+                    meta["target_type"] = "regression"
+                    meta["num_classes"] = 1
+                else:
+                    meta["target_type"] = "classification"
+                    meta["num_classes"] = int(target.nunique())
+        except Exception:
+            meta["target_type"] = "unknown"
+
+        datasets.append({
+            "name": f.name,
+            "size": f.stat().st_size,
+            "modified": f.stat().st_mtime,
+            **meta
+        })
+    return sorted(datasets, key=lambda x: x["name"])
 
 
 @app.post("/api/train")
@@ -179,6 +363,49 @@ async def predict(job_id: str, features: List[float]):
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Inference error: {str(e)}")
+
+@app.post("/api/deploy/{job_id}")
+async def deploy(job_id: str):
+    """
+    Provide an instant deploy descriptor for a trained model.
+    This surfaces the predict endpoint, method, and example cURL so users can ship fast.
+    """
+    run_path = Path(f"runs/{job_id}.json")
+    if job_id not in jobs and not run_path.exists():
+        raise HTTPException(status_code=404, detail=f"Job {job_id} not found. Train a model first.")
+
+    predict_url = f"/api/predict/{job_id}"
+    example_curl = f'''curl -X POST http://localhost:8000{predict_url} \\
+  -H "Content-Type: application/json" \\
+  -d "[0.1, 0.2, 0.3]"'''
+    return {
+        "job_id": job_id,
+        "endpoint": predict_url,
+        "method": "POST",
+        "body": "[<feature1>, <feature2>, ...]",
+        "example_curl": example_curl,
+        "notes": "Send a JSON array of numeric features. No auth applied; front a gateway for prod.",
+        "run_exists": run_path.exists(),
+        "model_exists": Path(f'models/{job_id}.pt').exists()
+    }
+
+@app.get("/api/health/{job_id}")
+async def health(job_id: str):
+    """
+    Lightweight health/meta check for a trained job.
+    Returns status and whether model artifacts exist.
+    """
+    run_path = Path(f"runs/{job_id}.json")
+    model_path = Path(f"models/{job_id}.pt")
+    status = jobs.get(job_id, {}).get("status", "unknown")
+    if status == "unknown" and run_path.exists():
+        status = "completed"
+    return {
+        "job_id": job_id,
+        "status": status,
+        "run_exists": run_path.exists(),
+        "model_exists": model_path.exists()
+    }
 
 
 @app.get("/api/docs/all")

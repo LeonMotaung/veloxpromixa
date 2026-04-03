@@ -132,7 +132,20 @@ class GraphBuilder:
                 infer=layer.infer,
             )
 
-            # Pre-assign known output features from params
+            # Param-driven metadata should be set regardless of infer status
+            if params:
+                if ntype == NodeType.DROPOUT:
+                    node.metadata["p"] = float(params[0])
+                elif ntype == NodeType.ATTENTION:
+                    node.metadata["heads"] = int(params[0])
+                    if len(params) > 1 and params[1] is not None:
+                        node.metadata["dim"] = int(params[1])
+                elif ntype == NodeType.MAXPOOL2D:
+                    node.metadata["kernel_size"] = int(params[0]) if params[0] is not None else 2
+                elif ntype == NodeType.ACTIVATION:
+                    node.metadata["fn"] = layer.layer_type.lower()
+
+            # Pre-assign known output features from params (only when not infer)
             if not layer.infer and params:
                 if ntype in (NodeType.LINEAR,):
                     node.out_features = int(params[0])
@@ -140,16 +153,6 @@ class GraphBuilder:
                     node.out_features = int(params[0])   # num filters
                 elif ntype == NodeType.LSTM:
                     node.out_features = int(params[0])
-                elif ntype == NodeType.DROPOUT:
-                    node.metadata["p"] = float(params[0])
-                elif ntype == NodeType.ATTENTION:
-                    node.metadata["heads"] = int(params[0])
-                    if len(params) > 1:
-                        node.metadata["dim"] = int(params[1])
-                elif ntype == NodeType.MAXPOOL2D:
-                    node.metadata["kernel_size"] = int(params[0]) if params else 2
-                elif ntype == NodeType.ACTIVATION:
-                    node.metadata["fn"] = layer.layer_type.lower()
 
 
 
@@ -167,21 +170,47 @@ class GraphBuilder:
         """
         ds_name = self.graph.dataset
         import os
+        
+        # 1. Check Registry
         if ds_name in DATASET_REGISTRY:
              input_size, num_classes, _ = DATASET_REGISTRY[ds_name]
-        elif os.path.exists(ds_name) and ds_name.lower().endswith(".csv"):
-             # Simple probe
-             import pandas as pd
-             df = pd.read_csv(ds_name)
-             input_size = df.shape[1] - 1
-             import numpy as np
-             y = df.iloc[:, -1].values
-             # logic for num_classes
-             is_regr = not (y.dtype.kind in 'i' or (y.dtype.kind in 'f' and np.all(y == y.astype(int))))
-             num_classes = 1 if is_regr else len(np.unique(y))
         else:
-             # Default fallback (MNIST)
-             input_size, num_classes, _ = DATASET_REGISTRY.get("mnist")
+             # 2. Check Filepath (with fallback to data/)
+             valid_path = None
+             paths_to_check = [ds_name, os.path.join("data", ds_name)]
+             for p in paths_to_check:
+                 if os.path.exists(p) and p.lower().endswith(".csv"):
+                     valid_path = p
+                     break
+             
+             if valid_path:
+                 try:
+                     import pandas as pd
+                     import numpy as np
+                     df = pd.read_csv(valid_path, nrows=5) # peek
+                     target_col = df.columns[-1]
+                     X_df = df.drop(columns=[target_col]).select_dtypes(include=[np.number])
+                     input_size = len(X_df.columns)
+                     
+                     # Determine classes (peek target column)
+                     target = pd.read_csv(valid_path, usecols=[df.columns[-1]]).iloc[:,0].values
+                     # Check if numeric vs symbolic
+                     is_numeric = np.issubdtype(target.dtype, np.number)
+                     if not is_numeric:
+                          is_regr = False
+                     else:
+                          # If integers, it's classes. If floats, it's regr.
+                          is_regr = not np.all(target == target.astype(int))
+                     
+                     num_classes = 1 if is_regr else len(np.unique(target))
+                     self.graph.dataset = valid_path # Update to full path for Executor
+                 except Exception as e:
+                     print(f"[VP] Shape Inference Warning: CSV probe failed ({e}). Defaulting to MNIST.")
+                     input_size, num_classes, _ = DATASET_REGISTRY.get("mnist")
+             else:
+                 # Default fallback
+                 self._log(f"      ! Dataset {ds_name!r} not found. Defaulting to MNIST geometry.")
+                 input_size, num_classes, _ = DATASET_REGISTRY.get("mnist")
 
 
         nodes = self.graph.nodes
