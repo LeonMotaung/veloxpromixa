@@ -2,8 +2,10 @@ import uuid
 import threading
 import os
 from typing import Dict, List, Optional
-from fastapi import FastAPI, BackgroundTasks, HTTPException, UploadFile, File
+from fastapi import FastAPI, BackgroundTasks, HTTPException, UploadFile, File, Depends
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from fastapi.responses import FileResponse, JSONResponse
+import stripe
 from pydantic import BaseModel
 from pathlib import Path
 import json
@@ -13,6 +15,9 @@ from openai import OpenAI
 from velox.runtime import VeloxRuntime
 
 app = FastAPI(title="Velox Proxima API — Model Serving & Training")
+
+security = HTTPBearer()
+stripe.api_key = os.getenv("STRIPE_SECRET_KEY")
 
 # Global state for training jobs and loaded models
 jobs: Dict[str, dict] = {}
@@ -296,8 +301,11 @@ async def list_datasets():
 
 
 @app.post("/api/train")
-async def start_training(vp: VPSource):
+async def start_training(vp: VPSource, credentials: HTTPAuthorizationCredentials = Depends(security)):
     """Start a training job from VP source code."""
+    if credentials.credentials != os.getenv("API_KEY", "proxima-key-2026"):
+        raise HTTPException(status_code=401, detail="Invalid authorization token")
+        
     job_id = vp.job_id or str(uuid.uuid4())[:8]
     if job_id in jobs:
         raise HTTPException(status_code=400, detail="Job ID already exists.")
@@ -319,8 +327,11 @@ async def get_training_status(job_id: str):
 
 
 @app.post("/api/predict/{job_id}")
-async def predict(job_id: str, features: List[float]):
+async def predict(job_id: str, features: List[float], credentials: HTTPAuthorizationCredentials = Depends(security)):
     """Perform inference using a trained model (auto-loads from registry if needed)."""
+    if credentials.credentials != os.getenv("API_KEY", "proxima-key-2026"):
+        raise HTTPException(status_code=401, detail="Invalid authorization token")
+        
     import torch
     global models
     
@@ -429,6 +440,25 @@ async def get_docs(name: str):
         return {"error": "Not found"}
     with open(path, "r", encoding="utf-8") as f:
         return {"content": f.read()}
+
+@app.post("/api/subscribe")
+async def create_subscription(plan: str, token: str, credentials: HTTPAuthorizationCredentials = Depends(security)):
+    """Stripe integration setup for premium tiers."""
+    if credentials.credentials != os.getenv("API_KEY", "proxima-key-2026"):
+        raise HTTPException(status_code=401, detail="Invalid authorization token")
+        
+    if not stripe.api_key:
+        raise HTTPException(status_code=500, detail="Stripe configuration missing on server")
+        
+    try:
+        customer = stripe.Customer.create(source=token, email="subscriber@velox.local")
+        subscription = stripe.Subscription.create(
+            customer=customer.id,
+            items=[{"plan": plan}],
+        )
+        return {"status": "success", "subscription_id": subscription.id}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
 if __name__ == "__main__":
     import uvicorn
