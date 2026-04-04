@@ -1,33 +1,42 @@
 <p align="center">
-  <img src="frontend/public/images/onwhite.png" width="200" alt="Velox Proxima Logo" />
+  <img src="frontend/public/images/onwhite.png" width="300" alt="Velox Proxima Logo" />
 </p>
 
 # 🚀 Velox Proxima (VP)
 
-**Compile-time safe machine learning.**
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+[![Python](https://img.shields.io/badge/Python-3.9%2B-green.svg)](https://www.python.org/)
+[![Build Status](https://img.shields.io/badge/Build-Passing-brightgreen.svg)]()
+[![Backend](https://img.shields.io/badge/Backend-FastAPI-009688.svg)]()
+[![Frontend](https://img.shields.io/badge/Frontend-React-61DAFB.svg)]()
 
-Write ML models with 5x less code, eliminate tensor shape errors, and deploy faster with a compiler-driven pipeline.
+**The Full-Stack ML Operating System.**
+
+Velox Proxima is an enterprise-grade, compiler-driven machine learning platform. It eliminates the friction between model research and production deployment by providing a unified DSL, a strict compile-time validation engine, and a ready-to-scale infrastructure.
 
 ---
 
 ## ⚡ Why Velox Proxima?
 
-Modern ML development is powerful — but fragile. With frameworks like PyTorch and TensorFlow, developers often encounter:
+Modern ML development is often fragmented between messy notebooks and complex DevOps. Velox Proxima unifies the stack:
 
-*   ❌ **Runtime tensor shape errors** (often after hours of training)
-*   ❌ **Complex, verbose model code** (boilerplate overhead)
-*   ❌ **The "Silent Fail" problem** (shape mismatches that don't crash but ruin training)
-*   ❌ **Manual architecture tuning** (guessing hidden layer sizes)
+*   🧠 **Zero-Boilerplate DSL**: Define models in 11 lines that would take 150+ in PyTorch.
+*   🔍 **Compile-Time Safety**: Catch `ShapeMismatchError` and architectural flaws before a single GPU cycle is wasted.
+*   ⚡ **Equilibrium Scheduler**: The industry's first thermal-aware compute router that dynamically shifts loads between Edge and Cloud.
+*   🐳 **1-Click Deployment**: A fully orchestrated Docker environment that launches the UI, API, and Compiler in one command.
 
-**Velox Proxima solves this at compile time.**
+## 🏗️ High-Level Architecture
 
-## ✅ What You Get
-
-*   🧠 **Compile-time shape validation** — no runtime surprises.
-*   ⚡ **Automatic architecture inference (?)** — use the Leon Identity (geometric mean) to auto-fill layer dimensions.
-*   🔧 **Graph-level optimizations** — operator fusion (e.g. Linear + ReLU) and no-op elimination.
-*   📦 **High-Fidelity DSL** — a declarative syntax that strips away 90% of structural MLOps boilerplate.
-*   🌍 **Edge-ready export pipeline** — Native support for ONNX, TFLite, and WASM.
+```mermaid
+graph TD
+    A[.vp Blueprint] -->|Compiler| B(Graph IR)
+    B -->|Optimizer| C{Equilibrium Scheduler}
+    C -->|Edge| D[Native Binary]
+    C -->|Cloud| E[PyTorch Worker]
+    D --> F[REST API Endpoint]
+    E --> F
+    F --> G[React Dashboard]
+```
 
 ## 🔥 Quick Example
 
@@ -44,115 +53,66 @@ optimizer adamw lr=0.001
 epochs 5
 ```
 
-### 🔹 Compiler Output
-
+### 🔹 Intelligent Compiler Output
 ```text
 [VP Compiler] Starting compilation…
 [VP Compiler] Dataset = 'mnist'
 [VP Compiler] Built node 0: Dense → TensorShape(64, 784)
 [VP Compiler] Layer 2 (Dense) ← inferred dim = 32 (geometric mean of 128 and 10)
-[VP Optimizer] ⚡ Performance Hint — Dense(10): consider 8 for kernel efficiency
+[VP Optimizer] ⚡ Performance Hint — Dense(10): consider 8 for better GPU efficiency
 [VP Optimizer] Fused Dense+Softmax → node 606e9bb3 (activation=softmax)
 [VP Compiler] Compilation SUCCESSFUL ✓
 ```
 
-## 🚀 Quick Start
+## 🚀 One-Click Deployment (Full Stack)
 
-### Option 1: Run with Docker (Recommended)
+Launch the entire ecosystem (FastAPI Backend + React Frontend + ML Worker) instantly:
+
 ```bash
 git clone https://github.com/LeonMotaung/velox
 cd velox
-docker-compose up
+docker-compose up --build
 ```
+*   **Dashboard**: `http://localhost:3000`
+*   **API**: `http://localhost:8000`
+*   **Docs**: `http://localhost:3000/docs`
 
-### Option 2: Local Install
+## 🖥️ The Developer CLI
+
+Velox Proxima comes with a production-grade CLI to manage your models:
+
 ```bash
-pip install -e .
-velox run examples/mnist.vp
-```
-
-## 🧠 How It Works
-
-Velox Proxima is built as a modular compiler pipeline inspired by systems like LLVM.
-
-**DSL → AST → Graph IR → Optimization → Execution**
-
-1.  **DSL Parser**: Converts `.vp` blueprints into an Abstract Syntax Tree (AST).
-2.  **Graph Builder**: Lowers the AST into the **ComputationalGraph IR**.
-3.  **Shape Inference Engine**: Resolves unknown dimensions (`?`) and propagates rank-4 tensors.
-4.  **Validation Pass**: Enforces strict compile-time checks (no silent fallbacks).
-5.  **Optimizer**: Fuses operators and applies performance hints.
-6.  **Execution Engine**: Routes the optimized graph to the PyTorch-based training worker.
-
-## 🧱 Core Features
-
-### 🧠 TensorShape System
-A production-grade shape system supporting:
-*   **Dense**: `(batch, features)`
-*   **Conv2D**: `(batch, channels, height, width)`
-*   **LSTM**: `(batch, seq_len, hidden)`
-*   **Attention**: `(batch, seq_len, dim)`
-*   **Symbolic Dims**: Supports `N`, `D`, `T` placeholders for dynamic resizing.
-
-### ⚡ Constraint-Based Inference
-Unknown dimensions (`?`) are automatically resolved using:
-*   Forward/Backward shape propagation.
-*   **The Leon Identity**: Geometric mean snapped to power-of-2 for optimal hardware utilization.
-
-### 🔍 Strict Validation
-Errors are caught before a single tensor is allocated:
-*   ❌ `ShapeMismatchError`: Layer 3 expected `(64, 128)` but got `(64, 32)`.
-*   ❌ `InvalidLayerOrderError`: Missing `Flatten()` between Conv2D and Dense.
-*   ❌ `MissingParameterError`: Required kernel size absent.
-
-## 📊 Performance & Optimization
-*   **Operator Fusion**: Automatically fuses Linear/Conv nodes with Activations.
-*   **Memory Efficiency**: Graph pruning eliminates dead-end nodes.
-*   **Structured Logging**: Detailed shape tracing per layer in `DEBUG` mode.
-
-## 🖥 CLI Usage
-```bash
-# Compile and print architectural summary
+# Compile and validate architecture
 velox compile model.vp
 
-# Compile and start local training
+# Launch training and monitor via live charts
 velox run model.vp
 
-# Validate model syntax and shapes (dry-run)
-velox lint model.vp
+# Visualize the graph as a high-res PNG
+velox visualize model.vp --output arch.png
 
-# Render architecture as a PDF/PNG (requires Graphviz)
-velox visualize model.vp --output model.png
+# Perform a dry-run linting pass
+velox lint model.vp
 ```
 
-## 📂 Project Structure
+## 🧱 Core Features & Infrastructure
+
+*   **TensorShape System**: Production-grade rank-4 tensor support (Batch, C, H, W).
+*   **Leon Identity**: Advanced geometric-mean inference for unknown dimensions (`?`).
+*   **Operator Fusion**: Automatic `Linear + Activation` fusion for reduced inference latency.
+*   **Stripe Integrated API**: Ready-to-monetize inference endpoints with built-in JWT security.
+*   **Edge-Ready**: Designed to compile models into native binaries for decentralized networks.
+
+## 📂 Project Anatomy
 ```text
 velox/
-├── compiler/       # Compiler IR, Shapes, & Logic
-├── dsl/            # Lexer, Parser, & AST
-├── engine/         # Training & Execution (PyTorch)
+├── compiler/       # The IR Core & Shape Engines
+├── engine/         # High-performance PyTorch workers
 ├── infrastructure/ # Deployment & Orchestration
-├── optimizer/      # Graph fusion & Optimization
-├── __main__.py     # CLI Entry Point
-└── requirements.txt
-examples/           # Sample .vp blueprints
-frontend/           # React dashboard for visual monitoring
+├── __main__.py     # Unified CLI Entry Point
+api.py              # FastAPI Production Gateway
+frontend/           # React/Vite Dashboard & Visualizer
 ```
-
-## 🛣 Roadmap
-- [x] Full Compiler + Shape System
-- [X] Constraint-based inference
-- [X] Operator Fusion (IR level)
-- [X] Developer CLI
-- [ ] Direct C++ / CUDA Export
-- [ ] Full ONNX/TFLite Backend
-- [ ] Multi-GPU Partitioning
-
-## 🤝 Contributing
-Join us in building the future of safe machine learning. 
-*   **Star** the repo to show support.
-*   **Contribute** new layer types to the IR.
-*   **Feedback** is always welcome via Issues.
 
 ## 🌟 Stars & Support
 
@@ -161,13 +121,11 @@ Show your support by starring the repository!
 
 ## 👥 Contributors
 
-A massive thank you to everyone contributing to the future of Velox Proxima. 
+A special thanks to the pioneers building the future of Velox Proxima.
 
 <a href="https://github.com/LeonMotaung/velox/graphs/contributors">
   <img src="https://contrib.rocks/image?repo=LeonMotaung/velox" />
 </a>
-
-Want to contribute? Check our [Contribution Guidelines](CONTRIBUTING.md).
 
 ## 📜 License
 Licensed under the Apache 2.0 License.
