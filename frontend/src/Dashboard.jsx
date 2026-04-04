@@ -393,16 +393,20 @@ loss cross_entropy`);
           <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fit, minmax(320px, 1fr))', gap: isMobile ? '16px' : '24px', minWidth: 0 }}>
             
             {/* Live Metrics */}
-            <div className="glass-panel" style={{ padding: isMobile ? '18px' : '24px', gridColumn: isMobile ? 'span 1' : 'span 2', minWidth: 0 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '24px' }}>
+            <div className="glass-panel" style={{ padding: isMobile ? '18px' : '24px', gridColumn: isMobile ? 'span 1' : 'span 2', minWidth: 0, position: 'relative' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '24px', flexWrap: 'wrap', gap: '10px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <BarChart3 size={20} color="var(--primary)" />
                   <span style={{ fontWeight: 600 }}>Training Convergence</span>
                 </div>
-                <div style={{ fontSize: '12px', opacity: 0.5 }}>ACTIVE JOB: {jobId || 'NONE'}</div>
+                <div style={{ display: 'flex', gap: '10px' }}>
+                   <div style={{ fontSize: '11px', padding: '4px 10px', background: 'var(--primary-glow)', border: '1px solid var(--primary)', color: 'var(--primary)', borderRadius: '6px', fontWeight: 700 }}>
+                      JOB: {jobId || 'IDLE'}
+                   </div>
+                </div>
               </div>
 
-              <div style={{ height: isMobile ? '220px' : '300px', width: '100%' }}>
+              <div style={{ height: isMobile ? '220px' : '300px', width: '100%', marginBottom: '20px' }}>
                 <ResponsiveContainer>
                   <AreaChart data={history}>
                     <defs>
@@ -420,6 +424,64 @@ loss cross_entropy`);
                   </AreaChart>
                 </ResponsiveContainer>
               </div>
+
+              {/* Optimization Visualization Pass */}
+              {history.length > 0 && runs.find(r => r.job_id === jobId)?.results?.graph_ir && (
+                <div style={{ borderTop: '1px solid var(--border)', paddingTop: '24px', marginTop: '24px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
+                    <Layers size={18} color="var(--primary)" />
+                    <span style={{ fontWeight: 600, fontSize: '14px' }}>Architectural Optimization Pass</span>
+                  </div>
+                  
+                  <div style={{ 
+                    display: 'flex', 
+                    gap: '12px', 
+                    overflowX: 'auto', 
+                    padding: '10px 0',
+                    scrollbarWidth: 'none'
+                  }}>
+                    {runs.find(r => r.job_id === jobId)?.results?.graph_ir.nodes
+                      .filter(n => !n.eliminated)
+                      .map((node, i) => (
+                      <React.Fragment key={node.id}>
+                        <div style={{ 
+                          minWidth: '200px', 
+                          background: node.fused_with ? 'var(--primary-glow)' : 'var(--glass)', 
+                          border: node.fused_with ? '1px solid var(--primary)' : '1px solid var(--border)',
+                          padding: '16px',
+                          borderRadius: '12px',
+                          position: 'relative'
+                        }}>
+                          {node.fused_with && (
+                            <Zap 
+                              size={14} 
+                              fill="var(--primary)" 
+                              style={{ position: 'absolute', top: '-7px', right: '-7px', filter: 'drop-shadow(0 0 5px var(--primary))' }} 
+                            />
+                          )}
+                          <div style={{ fontSize: '10px', fontWeight: 800, color: 'var(--primary)', marginBottom: '4px' }}>
+                            {node.id.toUpperCase()}
+                          </div>
+                          <div style={{ fontSize: '14px', fontWeight: 700 }}>{node.layer}</div>
+                          <div style={{ fontSize: '11px', opacity: 0.6, marginTop: '8px' }}>
+                            {node.input_shape} → {node.output_shape}
+                          </div>
+                          {node.fused_with && (
+                            <div style={{ fontSize: '10px', color: 'var(--primary)', marginTop: '8px', fontWeight: 600 }}>
+                              ⚡ FUSED {node.metadata.fused_activation.toUpperCase()}
+                            </div>
+                          )}
+                        </div>
+                        {i < runs.find(r => r.job_id === jobId)?.results?.graph_ir.nodes.filter(n => !n.eliminated).length - 1 && (
+                          <div style={{ display: 'flex', alignItems: 'center', opacity: 0.3 }}>
+                            <ChevronRight size={20} />
+                          </div>
+                        )}
+                      </React.Fragment>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Custom Data Sieve */}

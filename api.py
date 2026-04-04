@@ -187,12 +187,14 @@ def train_worker(job_id: str, source: str):
         results = rt.run_source(source, callback=update_progress)
         
         jobs[job_id]["status"] = "completed"
-        # Merge final results
+        # Merge final results including serialized Graph IR
+        graph_data = results.get("graph").serialize() if results.get("graph") else None
         jobs[job_id]["results"].update({
             "test_accuracy": results.get("test_accuracy"),
             "test_rmse": results.get("test_rmse"),
             "test_mae": results.get("test_mae"),
-            "total_time": results.get("total_time")
+            "total_time": results.get("total_time"),
+            "graph_ir": graph_data
         })
         
         # If the model was saved, track it for predictions

@@ -137,6 +137,21 @@ class GraphNode:
             f"in={self.input_shape} → out={self.output_shape})"
         )
 
+    def serialize(self) -> Dict[str, Any]:
+        """Convert node to a dictionary for frontend JSON serialization."""
+        return {
+            "id": self.id,
+            "type": self.node_type.name,
+            "layer": self.layer_type,
+            "params": [str(p) for p in self.params],
+            "input_shape": str(self.input_shape) if self.input_shape else None,
+            "output_shape": str(self.output_shape) if self.output_shape else None,
+            "infer": self.infer,
+            "fused_with": self.fused_with,
+            "eliminated": self.eliminated,
+            "metadata": self.metadata
+        }
+
 
 # ── Graph Edge ───────────────────────────────────────────────────────────────
 
@@ -340,12 +355,6 @@ class ComputationalGraph:
     def to_dot(self) -> str:
         """
         Export graph as Graphviz DOT notation for visualization.
-
-        Usage:
-            dot_src = graph.to_dot()
-            with open("graph.dot", "w") as f:
-                f.write(dot_src)
-            # Then: dot -Tpng graph.dot -o graph.png
         """
         lines = ["digraph VeloxProxima {"]
         lines.append('  graph [rankdir=TB fontname="Inter" bgcolor="#0d0d0d"]')
@@ -375,6 +384,25 @@ class ComputationalGraph:
 
         lines.append("}")
         return "\n".join(lines)
+
+    def serialize(self) -> Dict[str, Any]:
+        """Convert full graph to a dictionary for the React visualizer."""
+        return {
+            "dataset": self.dataset,
+            "optimizer": self.optimizer_name,
+            "epochs": self.epochs,
+            "batch_size": self.batch_size,
+            "loss": self.loss,
+            "nodes": [n.serialize() for n in self.nodes],
+            "edges": [
+                {
+                    "src": e.src,
+                    "dst": e.dst,
+                    "shape": str(e.shape) if e.shape else None
+                }
+                for e in self.edges
+            ]
+        }
 
     # ── Summary ──────────────────────────────────────────────────────────────
 
