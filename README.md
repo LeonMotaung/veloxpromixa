@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="frontend/public/images/onwhite.png" width="200" alt="Velox Proxima Logo" />
+</p>
+
 # 🚀 Velox Proxima (VP)
 
 **Compile-time safe machine learning.**
@@ -149,6 +153,21 @@ Join us in building the future of safe machine learning.
 *   **Star** the repo to show support.
 *   **Contribute** new layer types to the IR.
 *   **Feedback** is always welcome via Issues.
+
+## 🌟 Stars & Support
+
+Show your support by starring the repository! 
+[![GitHub stars](https://img.shields.io/github/stars/LeonMotaung/velox.svg?style=social&label=Star)](https://github.com/LeonMotaung/velox)
+
+## 👥 Contributors
+
+A massive thank you to everyone contributing to the future of Velox Proxima. 
+
+<a href="https://github.com/LeonMotaung/velox/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=LeonMotaung/velox" />
+</a>
+
+Want to contribute? Check our [Contribution Guidelines](CONTRIBUTING.md).
 
 ## 📜 License
 Licensed under the Apache 2.0 License.
