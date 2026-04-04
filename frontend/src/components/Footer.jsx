@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Activity, ChevronRight } from 'lucide-react';
+import { ChevronRight } from 'lucide-react';
 
 const FooterCol = ({ title, links }) => (
   <div>
@@ -19,7 +19,11 @@ export default function Footer() {
       <div className="container" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '40px' }}>
         <div style={{ minWidth: 0 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '24px' }}>
-            <Activity size={24} color="var(--primary)" />
+            <img
+              src={localStorage.getItem('theme') === 'light' ? '/images/onwhite.png' : '/images/onblack.png'}
+              alt="Velox Logo"
+              style={{ width: 28, height: 28, objectFit: 'contain' }}
+            />
             <span style={{ fontWeight: 800, fontSize: '20px' }}>VELOX</span>
           </div>
           <p style={{ opacity: 0.5, fontSize: '14px', lineHeight: 1.6 }}>
@@ -60,7 +64,7 @@ export default function Footer() {
           <span>CONVEX</span>
           <span>OPENAI</span>
         </div>
-        <div style={{ fontSize: '11px' }}>Built by Peter Steinberger & Community.</div>
+        <div style={{ fontSize: '11px' }}>Built by DeWet Technologies</div>
       </div>
     </section>
   );

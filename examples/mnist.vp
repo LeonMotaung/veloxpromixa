@@ -1,0 +1,17 @@
+# Velox Proxima — MNIST Vision Blueprint
+# Tests the full compiler pipeline
+
+layer Dense (128)
+layer ReLU ()
+layer Dense (?)
+layer Dense (10)
+layer Softmax ()
+
+train on mnist
+optimizer adamw lr=0.001
+epochs 5
+batch_size 64
+loss cross_entropy
+plot loss accuracy
+eval on test
+save models/mnist_test.pt

@@ -54,11 +54,17 @@ export default function GlassNavbar({ theme, toggleTheme }) {
   return (
     <>
       {showOverlay && (
-        <div className="backdrop-blur-overlay" />
+        <div 
+          className="backdrop-blur-overlay" 
+          onClick={() => {
+            setDropdownOpen(false);
+            setNavOpen(false);
+          }}
+        />
       )}
 
       <header className="glass-nav">
-        <div className="glass-nav__inner">
+        <div className={`glass-nav__inner ${dropdownOpen ? 'nav-dimmed' : ''}`}>
           <div className="glass-nav__brand">
             <Link to="/" className="glass-nav__logo">
               <img
@@ -80,12 +86,12 @@ export default function GlassNavbar({ theme, toggleTheme }) {
 
               <div className="glass-nav__dropdown" ref={dropdownRef}>
                 <button
-                  className="glass-nav__link glass-nav__trigger"
+                  className={`glass-nav__trigger ${dropdownOpen ? 'glass-nav__trigger--active' : ''}`}
                   onClick={() => setDropdownOpen(v => !v)}
                   aria-haspopup="true"
                   aria-expanded={dropdownOpen}
                 >
-                  More <ChevronDown size={16} />
+                  More <ChevronDown size={16} className={`chevron-icon ${dropdownOpen ? 'rotate' : ''}`} />
                 </button>
                 {dropdownOpen && (
                   <div className="glass-dropdown glass-dropdown--desktop">

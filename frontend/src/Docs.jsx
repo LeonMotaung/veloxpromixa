@@ -3,6 +3,7 @@ import axios from 'axios';
 import { useParams, Link } from 'react-router-dom';
 import { ChevronLeft, Terminal, Book, FileText, Activity, RefreshCw, Sun, Moon } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
+import GlassNavbar from './components/GlassNavbar';
 
 export default function Docs() {
   const { docName } = useParams();
@@ -48,41 +49,7 @@ export default function Docs() {
 
   return (
     <div style={{ backgroundColor: 'var(--background)', color: 'var(--text)', minHeight: '100vh', transition: 'all 0.4s' }}>
-      <nav style={{ borderBottom: '1px solid var(--border)', padding: isMobile ? '12px 16px' : '16px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: isMobile ? 'rgba(59,130,246,0.12)' : 'linear-gradient(90deg, rgba(59,130,246,0.12), rgba(168,85,247,0.12))', backdropFilter: 'blur(10px)', position: 'sticky', top: 0, zIndex: 15 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-             <Link to="/" style={{ color: 'var(--primary)', display: 'flex', alignItems: 'center', gap: '12px', textDecoration: 'none' }}>
-                <ChevronLeft size={24} />
-                <img 
-                  src={theme === 'dark' ? '/images/onblack.png' : '/images/onwhite.png'} 
-                  alt="Velox Logo" 
-                  style={{ width: '24px', height: '24px', objectFit: 'contain' }}
-                  onError={(e) => { e.target.style.display = 'none'; }}
-                />
-             </Link>
-             <h2 style={{ margin: 0, fontSize: '18px', fontWeight: 800 }}>VELOX <span style={{ color: 'var(--primary)' }}>DOCS</span></h2>
-        </div>
-        <div style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
-           <Link to="/docs/DSL_GUIDE" style={{ textDecoration: 'none', color: 'var(--text)', fontSize: '12px', opacity: 0.7 }}>DSL SYNTAX</Link>
-           <Link to="/docs/API_GUIDE" style={{ textDecoration: 'none', color: 'var(--text)', fontSize: '12px', opacity: 0.7 }}>API REFERENCE</Link>
-           <button 
-             onClick={toggleTheme}
-             style={{ 
-               background: 'var(--glass)', 
-               border: '1px solid var(--border)', 
-               color: 'var(--text)', 
-               width: '32px', 
-               height: '32px', 
-               borderRadius: '50%',
-               display: 'flex',
-               alignItems: 'center',
-               justifyContent: 'center',
-               cursor: 'pointer'
-             }}
-           >
-             {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
-           </button>
-        </div>
-      </nav>
+      <GlassNavbar theme={theme} toggleTheme={toggleTheme} />
 
       <div className="container" style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '260px 1fr', gap: isMobile ? '24px' : '48px', paddingTop: '32px', paddingBottom: '40px' }}>
           

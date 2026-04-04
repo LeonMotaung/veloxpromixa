@@ -23,7 +23,8 @@ full = [
 ]
 
 [project.scripts]
-vp = "vp:main"
+velox = "velox.__main__:main"
+vp = "velox.__main__:main"
 
 [tool.setuptools.packages.find]
 where = ["."]

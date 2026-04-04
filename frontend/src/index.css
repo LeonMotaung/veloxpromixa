@@ -289,7 +289,7 @@ a:hover .nav-link::after {
 .glass-nav {
   position: sticky;
   top: 0;
-  z-index: 40;
+  z-index: 60;
   backdrop-filter: blur(12px);
   background: var(--background);
   border-bottom: 1px solid var(--border);
@@ -320,8 +320,37 @@ a:hover .nav-link::after {
   font-size: 13px;
   padding: 8px 10px;
   border-radius: 8px;
+  transition: opacity 0.2s ease, background 0.2s ease;
 }
 .glass-nav__link:hover { background: var(--glass); }
+
+.glass-nav__trigger {
+  color: var(--text);
+  font-weight: 600;
+  font-size: 13px;
+  padding: 8px 4px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-family: inherit;
+  transition: opacity 0.2s ease;
+  opacity: 0.7;
+}
+
+.glass-nav__trigger:hover, .glass-nav__trigger--active {
+  opacity: 1;
+}
+
+.chevron-icon {
+  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.chevron-icon.rotate {
+  transform: rotate(180deg);
+}
 .glass-nav__actions { display: flex; align-items: center; gap: 10px; }
 .glass-nav__icon {
   background: var(--glass);
@@ -338,46 +367,65 @@ a:hover .nav-link::after {
 .glass-nav__cta { display: inline-flex; text-decoration: none; padding: 10px 14px; }
 .glass-nav__burger { display: none; }
 .glass-nav__dropdown { position: relative; }
+.nav-dimmed .glass-nav__brand,
+.nav-dimmed .glass-nav__links > .glass-nav__link,
+.nav-dimmed .glass-nav__actions {
+  opacity: 0.4;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
 .glass-dropdown {
   position: absolute;
   top: 110%;
   right: 0;
-  min-width: 220px;
+  min-width: 240px;
+  background: var(--background-alt);
+  border: 1px solid var(--border);
   border-radius: 14px;
-  background: rgba(255,255,255,0.08);
-  backdrop-filter: blur(16px);
-  border: 1px solid rgba(255,255,255,0.12);
-  box-shadow: 0 20px 60px rgba(0,0,0,0.35);
   padding: 10px;
-  z-index: 90;
-  animation: fadeSlide 180ms ease;
+  box-shadow: 
+    0 10px 30px rgba(0,0,0,0.25),
+    0 2px 10px rgba(0,0,0,0.15);
+  z-index: 60;
+  animation: dropdownIn 160ms ease;
 }
 .glass-dropdown__item {
   display: block;
-  padding: 10px 12px;
+  padding: 12px 14px;
   border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
   color: var(--text);
   text-decoration: none;
 }
-.glass-dropdown__item:hover { background: rgba(255,255,255,0.08); }
+.glass-dropdown__item:hover {
+  background: var(--glass);
+}
 .backdrop-blur-overlay {
   position: fixed;
   inset: 0;
-  backdrop-filter: blur(10px) brightness(0.9);
-  background: rgba(0,0,0,0.25);
-  z-index: 30;
+  backdrop-filter: blur(8px);
+  background: rgba(0,0,0,0.35);
+  z-index: 50;
   transition: opacity 200ms ease;
 }
 .glass-mobile-menu {
-  position: fixed;
-  inset: 0;
-  z-index: 80;
-  background: rgba(0,0,0,0.25);
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  z-index: 70;
+  background: rgba(0,0,0,0.75);
   backdrop-filter: blur(16px);
   display: flex;
   flex-direction: column;
   padding: 18px;
   gap: 10px;
+  border-bottom: 1px solid var(--border);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+}
+[data-theme='light'] .glass-mobile-menu {
+  background: rgba(255,255,255,0.85);
 }
 .glass-mobile-menu__item {
   padding: 14px;
@@ -389,14 +437,23 @@ a:hover .nav-link::after {
   font-weight: 700;
 }
 .glass-mobile-menu__section { margin-top: 8px; display: flex; flex-direction: column; gap: 8px; }
-@keyframes fadeSlide {
-  from { opacity: 0; transform: translateY(-6px); }
-  to { opacity: 1; transform: translateY(0); }
+@keyframes dropdownIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 @media (max-width: 768px) {
   .glass-nav__links { display: none; }
   .glass-nav__burger { display: inline-flex; }
 }
+
+/* Premium Doc Navbar */
+
 
 /* Custom Checkbox for Theme Toggle */
 .theme-switch {
