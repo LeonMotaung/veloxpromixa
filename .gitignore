@@ -7,8 +7,8 @@ __pycache__/
 
 # Data & Large Files
 # ------------------
-data/
-datasets/
+/data/
+/datasets/
 models/*.pt
 models/*.pth
 models/*.bin

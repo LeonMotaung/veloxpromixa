@@ -1,0 +1,50 @@
+[
+  {
+    "id": "mnist-cv",
+    "title": "MNIST Vision Baseline",
+    "desc": "The classic 28x28 handwritten digit recognition model using a 3-layer Dense stack with ReLU activations.",
+    "category": "Vision",
+    "difficulty": "Beginner",
+    "code": "layer Dense (128)\nlayer ReLU ()\nlayer Dense (?)\nlayer Dense (10)\nlayer Softmax ()\n\ntrain on mnist\noptimizer adam lr=0.001\nepochs 5"
+  },
+  {
+    "id": "cifar10-cnn",
+    "title": "CIFAR-10 Proxima Conv",
+    "desc": "High-performance Convolutional Neural Network for 32x32 color image classification.",
+    "category": "Vision",
+    "difficulty": "Intermediate",
+    "code": "layer Conv2D (32, 3)\nlayer MaxPool2D ()\nlayer Conv2D (64, 3)\nlayer Flatten ()\nlayer Dense (256)\nlayer Dense (10)\n\ntrain on cifar10"
+  },
+  {
+    "id": "sentiment-lstm",
+    "title": "Emotion Analysis LSTM",
+    "desc": "Recurrent LSTM architecture for sequence-based sentiment analysis on text datasets.",
+    "category": "NLP",
+    "difficulty": "Intermediate",
+    "code": "layer LSTM (256)\nlayer Dense (128)\nlayer Dense (?)\nlayer Dense (2)\nlayer Sigmoid ()\n\ntrain on sentiment_csv"
+  },
+  {
+    "id": "house-price-reg",
+    "title": "Tabular Price Regressor",
+    "desc": "Regression model optimized for tabular housing data, featuring MSE loss and AdamW optimizer.",
+    "category": "Tabular",
+    "difficulty": "Beginner",
+    "code": "layer Dense (64)\nlayer Dense (32)\nlayer Dense (1)\n\ntrain on housing\nloss mse"
+  },
+  {
+    "id": "anomaly-ae",
+    "title": "Fraud Sieve Autoencoder",
+    "desc": "Unsupervised bottleneck architecture designed to detect anomalies in financial transaction streams.",
+    "category": "Unsupervised",
+    "difficulty": "Advanced",
+    "code": "layer Dense (128)\nlayer Dense (32) # Bottleneck\nlayer Dense (128)\nlayer Dense (?)\n\ntrain on transactions_csv\nloss mse"
+  },
+  {
+    "id": "credit-classifier",
+    "title": "Credit Score Classifier",
+    "desc": "Industrial blueprint for bank-grade creditworthiness prediction. Identifies Good/Standard/Poor credit labels from behavioral and financial features.",
+    "category": "Finance",
+    "difficulty": "Intermediate",
+    "code": "layer Dense (64)\nlayer ReLU ()\nlayer Dense (?)\nlayer Dense (3)\nlayer Softmax ()\n\ntrain on credit_score.csv\noptimizer adamw lr=0.001\nepochs 10\nbatch_size 32\nloss cross_entropy"
+  }
+]
