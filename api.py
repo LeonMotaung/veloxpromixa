@@ -14,7 +14,18 @@ from openai import OpenAI
 
 from velox.runtime import VeloxRuntime
 
+from fastapi.middleware.cors import CORSMiddleware
+
 app = FastAPI(title="Velox Proxima API — Model Serving & Training")
+
+# Enable CORS for frontend communication
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"], # In production, you've to restrict this to your frontend domain
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 security = HTTPBearer()
 stripe.api_key = os.getenv("STRIPE_SECRET_KEY")
