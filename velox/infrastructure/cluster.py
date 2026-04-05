@@ -1,5 +1,5 @@
 """
-Velox Proxima (VP) — Infrastructure Layer
+Velox Proxima (VP) - Infrastructure Layer
 Layer 5: Infrastructure Layer
 
 Handles cluster management, auto-scaling, fault tolerance,

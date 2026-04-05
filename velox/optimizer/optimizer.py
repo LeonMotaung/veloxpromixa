@@ -1,16 +1,16 @@
 """
-Velox Proxima (VP) — Optimizer
+Velox Proxima (VP) - Optimizer
 Layer 3: Optimization Layer
 
 Applies a pipeline of graph transformation passes to improve
 performance before execution.
 
 Passes implemented:
-  1. OperatorFusionPass  — fuse consecutive Linear+ReLU into a single node
-  2. MemoryOptPass       — tag redundant nodes for in-place ops
-  3. LazyEvalPass        — mark nodes whose output can be deferred
-  4. AutoBatchingPass    — suggest optimal batch size based on device memory
-  5. LeonIdentityPass    — applies P_{t+1} stabilization curve to lr schedule
+  1. OperatorFusionPass  - fuse consecutive Linear+ReLU into a single node
+  2. MemoryOptPass       - tag redundant nodes for in-place ops
+  3. LazyEvalPass        - mark nodes whose output can be deferred
+  4. AutoBatchingPass    - suggest optimal batch size based on device memory
+  5. LeonIdentityPass    - applies P_{t+1} stabilization curve to lr schedule
 
 Leon Identity stabilization formula (from the VP spec):
 
@@ -30,7 +30,7 @@ from typing import List
 from ..compiler.graph import ComputationalGraph, GraphNode, NodeType
 
 
-# ── Base Pass ──────────────────────────────────────────────────────────────
+# -- Base Pass --------------------------------------------------------------
 
 class OptimizationPass:
     name: str = "base"
@@ -39,11 +39,11 @@ class OptimizationPass:
         raise NotImplementedError
 
 
-# ── Pass 1: Operator Fusion ────────────────────────────────────────────────
+# -- Pass 1: Operator Fusion ------------------------------------------------
 
 class OperatorFusionPass(OptimizationPass):
     """
-    Fuse consecutive Linear → Activation into a single 'LinAct' node.
+    Fuse consecutive Linear -> Activation into a single 'LinAct' node.
     This eliminates intermediate tensor allocations.
     """
     name = "operator_fusion"
@@ -67,7 +67,7 @@ class OperatorFusionPass(OptimizationPass):
         return graph
 
 
-# ── Pass 2: Memory Optimisation ────────────────────────────────────────────
+# -- Pass 2: Memory Optimisation --------------------------------------------
 
 class MemoryOptPass(OptimizationPass):
     """
@@ -90,7 +90,7 @@ class MemoryOptPass(OptimizationPass):
         return graph
 
 
-# ── Pass 3: Lazy Evaluation ────────────────────────────────────────────────
+# -- Pass 3: Lazy Evaluation ------------------------------------------------
 
 class LazyEvalPass(OptimizationPass):
     """
@@ -106,12 +106,12 @@ class LazyEvalPass(OptimizationPass):
         return graph
 
 
-# ── Pass 4: Auto-Batching ──────────────────────────────────────────────────
+# -- Pass 4: Auto-Batching --------------------------------------------------
 
 class AutoBatchingPass(OptimizationPass):
     """
     Suggest an optimal batch size based on device VRAM.
-    Does NOT modify graph.batch_size (advisory only — recorded in metadata).
+    Does NOT modify graph.batch_size (advisory only - recorded in metadata).
     """
     name = "auto_batching"
 
@@ -139,7 +139,7 @@ class AutoBatchingPass(OptimizationPass):
         return graph
 
 
-# ── Pass 5: Leon Identity Stabilization ───────────────────────────────────
+# -- Pass 5: Leon Identity Stabilization -----------------------------------
 
 class LeonIdentityPass(OptimizationPass):
     """
@@ -178,7 +178,7 @@ class LeonIdentityPass(OptimizationPass):
         return graph
 
 
-# ── Optimizer pipeline ─────────────────────────────────────────────────────
+# -- Optimizer pipeline -----------------------------------------------------
 
 DEFAULT_PASSES: List[OptimizationPass] = [
     OperatorFusionPass(),

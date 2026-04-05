@@ -19,7 +19,7 @@ class LivePlotter:
         if n_plots == 1: self.axes = [self.axes]
         
         self.colors = {"loss": "#E63946", "accuracy": "#457B9D", "lr": "#2A9D8F"}
-        self.fig.suptitle(f"Velox Proxima — Live Training [{dataset_name.upper()}]", 
+        self.fig.suptitle(f"Velox Proxima - Live Training [{dataset_name.upper()}]", 
                          fontsize=14, fontweight="bold")
         plt.tight_layout(rect=[0, 0.03, 1, 0.95])
         

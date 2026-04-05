@@ -1,5 +1,5 @@
 """
-Velox Proxima (VP) — Parser
+Velox Proxima (VP) - Parser
 Layer 1: Syntax Layer
 
 Converts a token stream into a ModelNode AST.
@@ -81,6 +81,12 @@ class Parser:
     def skip_newlines(self):
         while self.peek().type == TokenType.NEWLINE:
             self.advance()
+
+    def _strip_quotes(self, val: str) -> str:
+        """Remove leading/trailing " or ' from string."""
+        if len(val) >= 2 and ((val[0] == '"' and val[-1] == '"') or (val[0] == "'" and val[-1] == "'")):
+            return val[1:-1]
+        return val
 
     def match(self, *types: TokenType) -> bool:
         return self.peek().type in types
@@ -223,7 +229,7 @@ class Parser:
         self.expect(TokenType.ON)
         ds_tok = self.expect(TokenType.IDENTIFIER, TokenType.FILEPATH)
 
-        return TrainNode(dataset=ds_tok.value, line=start.line)
+        return TrainNode(dataset=self._strip_quotes(ds_tok.value), line=start.line)
 
     def _parse_optimizer(self) -> OptimizerNode:
         start = self.advance()          # consume 'optimizer'
@@ -260,11 +266,11 @@ class Parser:
         return LossNode(name=name_tok.value, line=start.line)
 
     def _parse_save(self) -> SaveNode:
-        """save model.pt"""
+        """save model.pt | save "weights/model.pt" """
         start = self.advance()      # consume 'save'
         tok = self.peek()
         if tok.type == TokenType.FILEPATH:
-            path = self.advance().value
+            path = self._strip_quotes(self.advance().value)
         elif tok.type == TokenType.IDENTIFIER:
             # bare name with no extension, e.g. 'save mymodel'
             path = self.advance().value + ".pt"

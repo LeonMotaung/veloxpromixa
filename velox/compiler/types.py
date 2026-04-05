@@ -1,5 +1,5 @@
 """
-Velox Proxima (VP) — Type System
+Velox Proxima (VP) - Type System
 Layer 2: Compiler Layer
 
 Defines the unified tensor shape system used across the entire compiler.
@@ -12,7 +12,7 @@ import math
 from typing import Tuple, Optional, Union
 
 
-# ── Symbolic dimension sentinel ─────────────────────────────────────────────
+# -- Symbolic dimension sentinel ---------------------------------------------
 
 class Symbolic:
     """Represents an unknown / symbolic tensor dimension (e.g. N, D)."""
@@ -30,7 +30,7 @@ class Symbolic:
         return hash(("__symbolic__", self.name))
 
 
-# ── TensorShape ──────────────────────────────────────────────────────────────
+# -- TensorShape --------------------------------------------------------------
 
 Dim = Union[int, Symbolic]
 
@@ -57,7 +57,7 @@ class TensorShape:
         self.dims = dims
         self.symbolic = symbolic or any(isinstance(d, Symbolic) for d in dims)
 
-    # ── Rank helpers ────────────────────────────────────────────────────────
+    # -- Rank helpers --------------------------------------------------------
 
     @property
     def rank(self) -> int:
@@ -82,7 +82,7 @@ class TensorShape:
         inner = ", ".join(str(d) for d in self.dims)
         return f"TensorShape({inner})"
 
-    # ── Factory helpers ──────────────────────────────────────────────────────
+    # -- Factory helpers ------------------------------------------------------
 
     @classmethod
     def scalar(cls) -> "TensorShape":
@@ -104,7 +104,7 @@ class TensorShape:
     def attention(cls, batch: Dim, seq_len: Dim, dim: Dim) -> "TensorShape":
         return cls((batch, seq_len, dim))
 
-    # ── Compatibility checks ─────────────────────────────────────────────────
+    # -- Compatibility checks -------------------------------------------------
 
     def is_compatible_with(self, other: "TensorShape") -> bool:
         """Returns True if this shape can feed into a layer expecting `other`."""
@@ -124,7 +124,7 @@ class TensorShape:
         return self.dims[-1]
 
 
-# ── CompilerError hierarchy ──────────────────────────────────────────────────
+# -- CompilerError hierarchy --------------------------------------------------
 
 class CompilerError(Exception):
     """Base class for all Velox Proxima compile-time errors."""
@@ -189,7 +189,7 @@ class InferenceError(CompilerError):
         super().__init__(msg)
 
 
-# ── Shape utilities ──────────────────────────────────────────────────────────
+# -- Shape utilities ----------------------------------------------------------
 
 def geometric_mean_pow2(a: int, b: int) -> int:
     """Return geometric mean of a and b, snapped to nearest power of 2.

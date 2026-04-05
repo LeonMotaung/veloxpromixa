@@ -1,5 +1,5 @@
 """
-Velox Proxima (VP) — Device Manager
+Velox Proxima (VP) - Device Manager
 Layer 4: Execution Engine
 
 Detects available compute hardware and returns the best device.
@@ -73,7 +73,7 @@ class DeviceManager:
         names = ", ".join(self._device_names)
         return (
             f"[VP] Device Manager: {self._device.upper()} "
-            f"| {self._device_count} device(s) detected — {names}"
+            f"| {self._device_count} device(s) detected - {names}"
         )
 
     def torch_device(self):

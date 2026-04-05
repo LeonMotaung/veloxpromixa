@@ -1,5 +1,5 @@
 """
-Velox Proxima Compiler — Public API
+Velox Proxima Compiler - Public API
 """
 from .types import (
     TensorShape,

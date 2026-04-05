@@ -1,5 +1,5 @@
 """
-Velox Proxima (VP) — Lexer
+Velox Proxima (VP) - Lexer
 Layer 1: Syntax Layer
 
 Tokenizes VP source code into a stream of tokens.
@@ -74,7 +74,7 @@ KEYWORDS = {
 
 
 
-# Order matters — longer/more-specific patterns first
+# Order matters - longer/more-specific patterns first
 TOKEN_PATTERNS = [
     (r"#[^\n]*",                                        TokenType.COMMENT),
     (r"\?",                                             TokenType.INFER),
@@ -85,11 +85,13 @@ TOKEN_PATTERNS = [
 
     (r"\d+\.\d+",                                       TokenType.FLOAT),
     (r"\d+",                                            TokenType.INTEGER),
-    # File paths: word chars + slashes + dots (e.g. model.pt, weights/my.pt)
-    (r"[a-zA-Z_][a-zA-Z0-9_/\\.]*\.[a-zA-Z0-9]+",    TokenType.FILEPATH),
-    (r"[a-zA-Z_][a-zA-Z0-9_]*",                        TokenType.IDENTIFIER),
+    # Quoted strings (e.g. "data/credit_score.csv")
+    (r"\"[^\"]*\"|'[^']*'",                            TokenType.FILEPATH),
+    # File paths: word chars + slashes + dots (e.g. model.pt, weights/my_model.pt)
+    (r"[a-zA-Z_][a-zA-Z0-9_\-/\\.]*\.[a-zA-Z0-9]+",    TokenType.FILEPATH),
+    (r"[a-zA-Z_][a-zA-Z0-9_]*",                         TokenType.IDENTIFIER),
     (r"\n",                                             TokenType.NEWLINE),
-    (r"[ \t\r]+",                                       None),              # whitespace — skip
+    (r"[ \t\r]+",                                       None),              # whitespace - skip
 ]
 
 COMPILED = [(re.compile(pat), tt) for pat, tt in TOKEN_PATTERNS]

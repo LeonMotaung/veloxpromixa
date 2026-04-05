@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Velox Proxima (VP) — Developer CLI
+Velox Proxima (VP) - Developer CLI
 ====================================
 Commands:
   velox compile  <model.vp>            Compile a .vp blueprint and print graph summary
@@ -29,12 +29,12 @@ from velox.compiler.types import CompilerError
 
 
 def _parse_and_compile(filepath: str, verbose: bool = False):
-    """Shared helper — read .vp file → ComputationalGraph."""
+    """Shared helper - read .vp file -> ComputationalGraph."""
     if not os.path.isfile(filepath):
-        print(f"[VP CLI] ✗ File not found: {filepath!r}", file=sys.stderr)
+        print(f"[VP CLI] [FAIL] File not found: {filepath!r}", file=sys.stderr)
         sys.exit(1)
     if not filepath.endswith(".vp"):
-        print(f"[VP CLI] ⚠  Warning: expected a .vp file, got {filepath!r}")
+        print(f"[VP CLI] [WARN] Warning: expected a .vp file, got {filepath!r}")
 
     with open(filepath, "r", encoding="utf-8") as fh:
         source = fh.read()
@@ -57,28 +57,28 @@ def _parse_and_compile(filepath: str, verbose: bool = False):
         sys.exit(1)
 
 
-# ── Commands ──────────────────────────────────────────────────────────────────
+# -- Commands ------------------------------------------------------------------
 
 def cmd_compile(args):
     graph = _parse_and_compile(args.file, verbose=args.verbose)
-    print("\n" + "═" * 68)
-    print("  VELOX PROXIMA — Compilation SUCCESSFUL ✓")
-    print("═" * 68)
+    print("\n" + "=" * 68)
+    print("  VELOX PROXIMA - Compilation SUCCESSFUL OK")
+    print("=" * 68)
     print(graph.summary())
 
 
 def cmd_lint(args):
     graph = _parse_and_compile(args.file, verbose=args.verbose)
     active = [n for n in graph.nodes if not n.eliminated]
-    print(f"\n[VP Lint] ✓ {args.file!r} is valid — {len(active)} active nodes, "
+    print(f"\n[VP Lint] OK {args.file!r} is valid - {len(active)} active nodes, "
           f"0 errors.")
 
 
 def cmd_run(args):
     graph = _parse_and_compile(args.file, verbose=args.verbose)
-    print("\n" + "═" * 68)
-    print("  VELOX PROXIMA — Launching Training Engine")
-    print("═" * 68)
+    print("\n" + "=" * 68)
+    print("  VELOX PROXIMA - Launching Training Engine")
+    print("=" * 68)
     print(graph.summary())
     print()
     try:
@@ -86,7 +86,7 @@ def cmd_run(args):
         executor = Executor(graph)
         executor.run()
     except ImportError:
-        print("[VP CLI] ✗ Engine executor not found. Ensure velox.engine is installed.")
+        print("[VP CLI] [FAIL] Engine executor not found. Ensure velox.engine is installed.")
         sys.exit(1)
     except Exception as exc:
         print(f"[VP CLI] Training failed: {exc}", file=sys.stderr)
@@ -105,7 +105,7 @@ def cmd_visualize(args):
 
     with open(dot_file, "w", encoding="utf-8") as fh:
         fh.write(dot_src)
-    print(f"[VP Visualize] DOT written → {dot_file}")
+    print(f"[VP Visualize] DOT written -> {dot_file}")
 
     # Try to render with graphviz
     try:
@@ -115,21 +115,21 @@ def cmd_visualize(args):
             capture_output=True, text=True
         )
         if result.returncode == 0:
-            print(f"[VP Visualize] PNG rendered → {png_file}")
+            print(f"[VP Visualize] PNG rendered -> {png_file}")
         else:
-            print(f"[VP Visualize] ⚠  Graphviz render failed: {result.stderr.strip()}")
+            print(f"[VP Visualize] [WARN] Graphviz render failed: {result.stderr.strip()}")
             print(f"  Install Graphviz: https://graphviz.org/download/")
     except FileNotFoundError:
-        print(f"[VP Visualize] ⚠  Graphviz not found. Install from https://graphviz.org")
-        print(f"  DOT source saved to {dot_file!r} — render manually.")
+        print(f"[VP Visualize] [WARN]  Graphviz not found. Install from https://graphviz.org")
+        print(f"  DOT source saved to {dot_file!r} - render manually.")
 
 
-# ── CLI entry ─────────────────────────────────────────────────────────────────
+# -- CLI entry -----------------------------------------------------------------
 
 def main():
     parser = argparse.ArgumentParser(
         prog="velox",
-        description="Velox Proxima — Zero-Boilerplate ML Compiler CLI",
+        description="Velox Proxima - Zero-Boilerplate ML Compiler CLI",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
@@ -143,20 +143,20 @@ Examples:
     sub = parser.add_subparsers(title="commands", dest="command")
     sub.required = True
 
-    # ── compile ──────────────────────────────────────────────────────────────
+    # -- compile --------------------------------------------------------------
     p_compile = sub.add_parser("compile", help="Compile a .vp blueprint")
     p_compile.add_argument("file",    help="Path to .vp blueprint file")
     p_compile.add_argument("--verbose", action="store_true",
                            help="Enable debug-level compiler logging")
     p_compile.set_defaults(func=cmd_compile)
 
-    # ── run ──────────────────────────────────────────────────────────────────
+    # -- run ------------------------------------------------------------------
     p_run = sub.add_parser("run", help="Compile and train a .vp model")
     p_run.add_argument("file",        help="Path to .vp blueprint file")
     p_run.add_argument("--verbose",   action="store_true")
     p_run.set_defaults(func=cmd_run)
 
-    # ── visualize ────────────────────────────────────────────────────────────
+    # -- visualize ------------------------------------------------------------
     p_vis = sub.add_parser("visualize", help="Render architecture as PNG")
     p_vis.add_argument("file",         help="Path to .vp blueprint file")
     p_vis.add_argument("--output",     default=None,
@@ -164,7 +164,7 @@ Examples:
     p_vis.add_argument("--verbose",    action="store_true")
     p_vis.set_defaults(func=cmd_visualize)
 
-    # ── lint ─────────────────────────────────────────────────────────────────
+    # -- lint -----------------------------------------------------------------
     p_lint = sub.add_parser("lint", help="Validate without running")
     p_lint.add_argument("file",        help="Path to .vp blueprint file")
     p_lint.add_argument("--verbose",   action="store_true")

@@ -45,3 +45,12 @@ Thumbs.db
 # ------------------
 .python-version
 .ipynb_checkpoints/
+
+# Runtime Runs & Artifacts
+runs/
+smoke_output.txt
+smoke_output_utf8.txt
+cnn_err.txt
+run10_out.txt
+syntax_out.txt
+status

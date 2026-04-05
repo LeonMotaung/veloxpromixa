@@ -14,7 +14,6 @@ COPY requirements.txt .
 
 # Install dependencies
 RUN pip install --no-cache-dir -r requirements.txt
-RUN pip install pandas openai stripe
 
 # Copy the rest of the application
 COPY . .
@@ -26,4 +25,4 @@ RUN mkdir -p data models runs logs docs
 EXPOSE 8000
 
 # Run the API
-CMD ["uvicorn", "api:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["sh", "-c", "uvicorn api:app --host 0.0.0.0 --port ${PORT:-8000}"]

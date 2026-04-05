@@ -1,0 +1,11 @@
+layer Dense (64)
+layer ReLU ()
+layer Dense (?)
+layer Dense (3)
+layer Softmax ()
+
+train on "data/credit_score.csv"
+optimizer adamw lr=0.001
+epochs 1
+batch_size 2
+loss cross_entropy

@@ -1,5 +1,5 @@
 """
-Velox Proxima (VP) — Execution Engine
+Velox Proxima (VP) - Execution Engine
 Layer 4: Execution Engine
 
 Builds and trains a PyTorch model from a ComputationalGraph.
@@ -17,7 +17,7 @@ import os
 from typing import Optional, Callable
 
 
-# ── PyTorch Imports ────────────────────────────────────────────────────────
+# -- PyTorch Imports --------------------------------------------------------
 
 try:
     import torch
@@ -28,7 +28,7 @@ except ImportError:
 
 
 
-# ── AMP Support ────────────────────────────────────────────────────────────
+# -- AMP Support ------------------------------------------------------------
 
 class AMPManager:
     """Manages Auto-Mixed Precision training for GPU efficiency."""
@@ -74,7 +74,7 @@ from .device_manager import DeviceManager
 from ..compiler.graph import ComputationalGraph, GraphNode, NodeType
 
 
-# ── PyTorch model builder ──────────────────────────────────────────────────
+# -- PyTorch model builder --------------------------------------------------
 
 class _AttentionWrapper(nn.Module):
     def __init__(self, dim, heads=8):
@@ -212,7 +212,7 @@ class _LSTMWrapper:
                 self.linear = nn.Linear(hid, hid)
 
             def forward(self, x):
-                # x: (batch, seq, features) — for flat input add seq dim
+                # x: (batch, seq, features) - for flat input add seq dim
                 if x.dim() == 2:
                     x = x.unsqueeze(1)
                 out, _ = self.lstm(x)
@@ -221,7 +221,7 @@ class _LSTMWrapper:
         return _Module(input_size, hidden_size)
 
 
-# ── Dataset loaders ────────────────────────────────────────────────────────
+# -- Dataset loaders --------------------------------------------------------
 
 def _load_dataset(name: str, batch_size: int):
     """Return (train_loader, test_loader, input_size, num_classes)."""
@@ -327,7 +327,7 @@ def _load_dataset(name: str, batch_size: int):
                 if name == "mnist"
                 else torchvision.datasets.FashionMNIST
             )
-            # We don't flatten here — we return (Batch, 1, 28, 28)
+            # We don't flatten here - we return (Batch, 1, 28, 28)
             transform = T.Compose([T.ToTensor(), T.Normalize((0.1307,), (0.3081,))])
             train_ds = ds_class("./data", train=True,  download=True, transform=transform)
             test_ds  = ds_class("./data", train=False, download=True, transform=transform)
@@ -337,7 +337,7 @@ def _load_dataset(name: str, batch_size: int):
         except ImportError:
             pass
         # Fallback: synthetic MNIST-shaped data
-        print("[VP] torchvision not found — using synthetic data.")
+        print("[VP] torchvision not found - using synthetic data.")
         x = torch.randn(1000, 1, 28, 28)
         y = torch.randint(0, 10, (1000,))
         ds = TensorDataset(x, y)
@@ -427,7 +427,7 @@ def _load_dataset(name: str, batch_size: int):
         raise ValueError(f"[VP] Unknown dataset: {name!r}. Available: mnist, cifar10, iris, fashion_mnist or any CSV in ./data")
 
 
-# ── Loss resolver ──────────────────────────────────────────────────────────
+# -- Loss resolver ----------------------------------------------------------
 
 def _get_loss_fn(name: str):
     import torch.nn as nn
@@ -441,7 +441,7 @@ def _get_loss_fn(name: str):
     return mapping.get(name.lower(), nn.CrossEntropyLoss())
 
 
-# ── Optimizer resolver ─────────────────────────────────────────────────────
+# -- Optimizer resolver -----------------------------------------------------
 
 def _get_optimizer(name: str, params, hparams: dict):
     import torch.optim as optim
@@ -459,7 +459,7 @@ def _get_optimizer(name: str, params, hparams: dict):
     return factory()
 
 
-# ── Main Executor ──────────────────────────────────────────────────────────
+# -- Main Executor ----------------------------------------------------------
 
 class Executor:
     """
@@ -490,7 +490,7 @@ class Executor:
         self._log(self.device_manager.banner())
         self._log(f"[VP] Loading dataset: {self.graph.dataset!r} ...")
 
-        # ── Load data
+        # -- Load data
         train_loader, test_loader, input_shape, num_classes = _load_dataset(
             self.graph.dataset, self.graph.batch_size
         )
@@ -503,7 +503,7 @@ class Executor:
         # If input_shape is (C, H, W), total flat size is product
         input_size = input_shape if isinstance(input_shape, int) else (input_shape[0]*input_shape[1]*input_shape[2])
 
-        # ── Build model
+        # -- Build model
         self._log("[VP] Building model from computational graph ...")
         # We inject a Flattener if a Dense layer follows an Image input
         model = _build_torch_model(self.graph, input_size, num_classes)
@@ -520,7 +520,7 @@ class Executor:
         if amp.use_amp:
             self._log("[VP] Auto-Mixed Precision (AMP) enabled for 2GB VRAM optimization.")
 
-        # ── Live Plotting
+        # -- Live Plotting
         live_plotter = None
         if self.graph.live_plot:
             try:
@@ -530,7 +530,7 @@ class Executor:
             except ImportError:
                 self._log("[VP] matplotlib required for live plots.")
 
-        # ── Initialize Lazy Modules (if any)
+        # -- Initialize Lazy Modules (if any)
         # We run a dummy batch through the model to wake up LazyLinear layers
         dummy_shape = input_shape if isinstance(input_shape, tuple) else (input_shape,)
         dummy_x = torch.randn(2, *dummy_shape).to(device) # use 2 to satisfy BatchNorm
@@ -576,7 +576,7 @@ class Executor:
 
 
         is_regression = num_classes == 1
-        # ── Optimizer & loss
+        # -- Optimizer & loss
         optimizer = _get_optimizer(
             self.graph.optimizer_name,
             model.parameters(),
@@ -595,14 +595,14 @@ class Executor:
 
         criterion = _get_loss_fn(self.graph.loss)
 
-        # ── Leon Identity LR schedule
+        # -- Leon Identity LR schedule
         lr_schedule = getattr(self.graph, "_lr_schedule", None)
         meta = getattr(self.graph, "_metadata", {})
         if meta.get("leon_identity_applied") and lr_schedule:
             self._log("[VP] Leon Identity LR schedule active. Equilibrium stable.")
 
 
-        # ── Training loop
+        # -- Training loop
         results = []
         for epoch in range(1, self.graph.epochs + 1):
             # Apply LR from Leon Identity schedule
@@ -656,7 +656,7 @@ class Executor:
                 live_plotter(epoch, avg_loss, acc, current_lr)
 
 
-        # ── Evaluation (always run on test set)
+        # -- Evaluation (always run on test set)
         eval_loader = test_loader
         eval_label = "Test"
         if self.graph.eval_split == "train":
@@ -707,14 +707,14 @@ class Executor:
              self._log(f"\n[VP] {eval_label} Complete (Regression Mode)")
 
 
-        # ── Save model
+        # -- Save model
         if self.graph.save_path:
             import os
             os.makedirs(os.path.dirname(self.graph.save_path) or ".", exist_ok=True)
             torch.save(model.state_dict(), self.graph.save_path)
-            self._log(f"[VP] Model saved → {self.graph.save_path}")
+            self._log(f"[VP] Model saved -> {self.graph.save_path}")
 
-        # ── Plot
+        # -- Plot
         if self.graph.plot_targets:
             self._plot(results, self.graph.plot_targets, self.graph.plot_save_path)
 
@@ -748,7 +748,7 @@ class Executor:
             import matplotlib.pyplot as plt
             import matplotlib.ticker as ticker
         except ImportError:
-            self._log("[VP] matplotlib not installed — skipping plot. (pip install matplotlib)")
+            self._log("[VP] matplotlib not installed - skipping plot. (pip install matplotlib)")
             return
 
         epochs = [r["epoch"] for r in history]
@@ -794,7 +794,7 @@ class Executor:
             ax.grid(True, alpha=0.3)
 
         fig.suptitle(
-            f"Velox Proxima — {self.graph.dataset.upper()} Training",
+            f"Velox Proxima - {self.graph.dataset.upper()} Training",
             fontsize=14, fontweight="bold", y=1.02,
         )
         plt.tight_layout()
@@ -803,7 +803,7 @@ class Executor:
             import os
             os.makedirs(os.path.dirname(save_path) or ".", exist_ok=True)
             plt.savefig(save_path, dpi=150, bbox_inches="tight")
-            self._log(f"[VP] Plot saved → {save_path}")
+            self._log(f"[VP] Plot saved -> {save_path}")
         else:
             self._log("[VP] Displaying plot ...")
             plt.show()

@@ -1,5 +1,5 @@
 """
-Velox Proxima (VP) — Graph Builder
+Velox Proxima (VP) - Graph Builder
 Layer 2: Compiler Layer
 
 Production-grade compiler pass that walks the AST and emits a
@@ -38,8 +38,8 @@ from .types import (
 
 logger = logging.getLogger("velox.compiler")
 
-# ── Dataset registry ─────────────────────────────────────────────────────────
-# Maps name → (input_features, num_classes, raw_shape, default_loss)
+# -- Dataset registry ---------------------------------------------------------
+# Maps name -> (input_features, num_classes, raw_shape, default_loss)
 
 DatasetMeta = Tuple[int, int, tuple, str]
 
@@ -54,7 +54,7 @@ DATASET_REGISTRY: Dict[str, DatasetMeta] = {
 
 BATCH = 32   # symbolic batch placeholder for shape descriptors
 
-# ── Compiler ─────────────────────────────────────────────────────────────────
+# -- Compiler -----------------------------------------------------------------
 
 class GraphBuilder:
     """
@@ -63,12 +63,12 @@ class GraphBuilder:
     Pipeline
     --------
       1. Extract training config (dataset, optimizer, epochs, …)
-      2. Resolve dataset → concrete input shape
+      2. Resolve dataset -> concrete input shape
       3. Build GraphNode list from LayerNode list
       4. Forward-pass shape propagation
       5. Backward-pass '?' inference (Leon Identity geometric mean)
       6. Wire directed edges
-      7. Validation pass (strict — raises on any issue)
+      7. Validation pass (strict - raises on any issue)
       8. Optimization passes (fusion, elimination)
     """
 
@@ -81,7 +81,7 @@ class GraphBuilder:
         else:
             logging.basicConfig(level=logging.INFO)
 
-    # ── Public entry ─────────────────────────────────────────────────────────
+    # -- Public entry ---------------------------------------------------------
 
     def build(self) -> ComputationalGraph:
         logger.info("[VP Compiler] Starting compilation…")
@@ -98,10 +98,10 @@ class GraphBuilder:
         self._wire_edges()
         self.graph.validate()
         self.graph.optimize()
-        logger.info("[VP Compiler] Compilation complete ✓")
+        logger.info("[VP Compiler] Compilation complete OK")
         return self.graph
 
-    # ── Config extraction ─────────────────────────────────────────────────────
+    # -- Config extraction -----------------------------------------------------
 
     def _apply_train(self) -> None:
         if self.ast.train is None:
@@ -154,7 +154,7 @@ class GraphBuilder:
         if self.ast.eval:
             self.graph.eval_split = self.ast.eval.split
 
-    # ── Dataset resolution ────────────────────────────────────────────────────
+    # -- Dataset resolution ----------------------------------------------------
 
     def _resolve_dataset(self) -> Tuple[int, int]:
         """
@@ -162,7 +162,7 @@ class GraphBuilder:
         Order of precedence:
           1. Built-in registry
           2. CSV file path (explicit target column if provided)
-        Raises DatasetError on failure — no silent fallbacks.
+        Raises DatasetError on failure - no silent fallbacks.
         """
         ds_name = self.graph.dataset
 
@@ -171,12 +171,12 @@ class GraphBuilder:
             if not self.ast.loss:          # only override if user didn't set loss
                 self.graph.loss = default_loss
             logger.debug(
-                f"[VP Compiler] Registry hit: {ds_name!r} → "
+                f"[VP Compiler] Registry hit: {ds_name!r} -> "
                 f"inputs={input_size} classes={num_classes}"
             )
             return input_size, num_classes
 
-        # ── CSV file resolution ──────────────────────────────────────────────
+        # -- CSV file resolution ----------------------------------------------
         paths_to_try = [ds_name, os.path.join("data", ds_name)]
         csv_path: Optional[str] = None
         for p in paths_to_try:
@@ -192,7 +192,7 @@ class GraphBuilder:
                 f"  To use a CSV: train dataset=\"path/to/data.csv\" target=\"column_name\""
             )
 
-        # ── Probe CSV ────────────────────────────────────────────────────────
+        # -- Probe CSV --------------------------------------------------------
         try:
             import pandas as pd
             import numpy as np
@@ -233,7 +233,7 @@ class GraphBuilder:
             self.graph.dataset = csv_path  # store resolved path for Executor
             self.graph.dataset_target_col = target_col
             logger.info(
-                f"[VP Compiler] CSV resolved: {csv_path!r} → "
+                f"[VP Compiler] CSV resolved: {csv_path!r} -> "
                 f"features={input_size}, classes={num_classes}, "
                 f"target={target_col!r}"
             )
@@ -251,7 +251,7 @@ class GraphBuilder:
                 f"Failed to probe CSV {csv_path!r}: {exc}"
             )
 
-    # ── Node construction ─────────────────────────────────────────────────────
+    # -- Node construction -----------------------------------------------------
 
     def _build_nodes(self) -> None:
         if not self.ast.layers:
@@ -306,21 +306,21 @@ class GraphBuilder:
             self.graph.add_node(node)
             logger.debug(f"[VP Compiler] Built node {i}: {node}")
 
-    # ── Shape inference ────────────────────────────────────────────────────────
+    # -- Shape inference --------------------------------------------------------
 
     def _shape_inference(self) -> None:
         """
         Constraint-based shape inference.
 
-          Pass 1 — Forward: propagate concrete shapes from dataset input.
-          Pass 2 — Backward: resolve '?' via Leon Identity (geometric mean).
-          Pass 3 — Forward: finalize all in/out shapes.
+          Pass 1 - Forward: propagate concrete shapes from dataset input.
+          Pass 2 - Backward: resolve '?' via Leon Identity (geometric mean).
+          Pass 3 - Forward: finalize all in/out shapes.
         """
         input_size, num_classes = self._resolve_dataset()
         bs = self.graph.batch_size
         nodes = self.graph.nodes
 
-        # ── Pass 1: Forward — propagate output shapes from known params ───────
+        # -- Pass 1: Forward - propagate output shapes from known params -------
         prev_out_features: int = input_size
         prev_node_type: Optional[NodeType] = None
 
@@ -368,7 +368,7 @@ class GraphBuilder:
                 pow2 = suggest_power_of_2(out_f)
                 if out_f != pow2:
                     logger.info(
-                        f"[VP Compiler] ⚡ Performance Hint — Layer {i} ({node.layer_type}): "
+                        f"[VP Compiler] [!] Performance Hint - Layer {i} ({node.layer_type}): "
                         f"size={out_f} is not a power of 2. "
                         f"Consider {pow2} for better GPU kernel efficiency."
                     )
@@ -378,7 +378,7 @@ class GraphBuilder:
             if node.output_shape is not None:
                 prev_node_type = node.node_type
 
-        # ── Pass 2: Backward — resolve '?' via geometric mean ─────────────────
+        # -- Pass 2: Backward - resolve '?' via geometric mean -----------------
         for i, node in enumerate(nodes):
             if not node.infer:
                 continue
@@ -405,11 +405,11 @@ class GraphBuilder:
             node.metadata["inferred"]      = True
             node.metadata["inferred_from"] = (prev_size, next_size)
             logger.debug(
-                f"[VP Compiler] Layer {i} ({node.layer_type}) ← inferred dim = "
+                f"[VP Compiler] Layer {i} ({node.layer_type}) <- inferred dim = "
                 f"{inferred} (geometric mean of {prev_size} and {next_size})"
             )
 
-        # ── Pass 3: Forward — propagate Flatten and finalize all input shapes ─
+        # -- Pass 3: Forward - propagate Flatten and finalize all input shapes -
         prev_out_features = input_size
         prev_conv_spatial: Optional[Tuple] = None
 
@@ -431,7 +431,7 @@ class GraphBuilder:
                 if isinstance(fd, int):
                     prev_out_features = fd
 
-    # ── Edge wiring ────────────────────────────────────────────────────────────
+    # -- Edge wiring ------------------------------------------------------------
 
     def _wire_edges(self) -> None:
         nodes = self.graph.nodes
@@ -441,7 +441,7 @@ class GraphBuilder:
             self.graph.add_edge(src.id, dst.id, shape=src.output_shape)
 
 
-# ── Public API ────────────────────────────────────────────────────────────────
+# -- Public API ----------------------------------------------------------------
 
 def compile_ast(ast: ModelNode, verbose: bool = False) -> ComputationalGraph:
     """

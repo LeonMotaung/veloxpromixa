@@ -1,5 +1,5 @@
 """
-Velox Proxima (VP) — Computational Graph IR
+Velox Proxima (VP) - Computational Graph IR
 Layer 2: Compiler Layer
 
 Upgraded to use the full TensorShape system and strict node metadata.
@@ -23,7 +23,7 @@ from .types import (
 logger = logging.getLogger("velox.compiler.graph")
 
 
-# ── Node type taxonomy ───────────────────────────────────────────────────────
+# -- Node type taxonomy -------------------------------------------------------
 
 class NodeType(Enum):
     INPUT      = auto()
@@ -69,14 +69,14 @@ LAYER_TYPE_MAP: Dict[str, NodeType] = {
     "SiLU":      NodeType.ACTIVATION,
 }
 
-# Passthrough node types — output shape equals input shape
+# Passthrough node types - output shape equals input shape
 PASSTHROUGH_TYPES = {
     NodeType.DROPOUT,
     NodeType.BATCHNORM,
     NodeType.ACTIVATION,
 }
 
-# Architecturally invalid transitions (prev_type → curr_type)
+# Architecturally invalid transitions (prev_type -> curr_type)
 INVALID_TRANSITIONS: Dict[NodeType, Dict[NodeType, str]] = {
     NodeType.CONV2D: {
         NodeType.LINEAR: (
@@ -93,7 +93,7 @@ INVALID_TRANSITIONS: Dict[NodeType, Dict[NodeType, str]] = {
 }
 
 
-# ── Graph Node ───────────────────────────────────────────────────────────────
+# -- Graph Node ---------------------------------------------------------------
 
 @dataclass
 class GraphNode:
@@ -109,7 +109,7 @@ class GraphNode:
     input_shape: Optional[TensorShape] = None
     output_shape: Optional[TensorShape] = None
 
-    # Backwards-compat scalars — derived from shapes
+    # Backwards-compat scalars - derived from shapes
     @property
     def in_features(self) -> Optional[int]:
         if self.input_shape is None:
@@ -134,7 +134,7 @@ class GraphNode:
         inf_tag = "[?]" if self.infer else ""
         return (
             f"GraphNode({self.id} | {self.layer_type}{inf_tag} "
-            f"in={self.input_shape} → out={self.output_shape})"
+            f"in={self.input_shape} -> out={self.output_shape})"
         )
 
     def serialize(self) -> Dict[str, Any]:
@@ -153,7 +153,7 @@ class GraphNode:
         }
 
 
-# ── Graph Edge ───────────────────────────────────────────────────────────────
+# -- Graph Edge ---------------------------------------------------------------
 
 @dataclass
 class GraphEdge:
@@ -163,12 +163,12 @@ class GraphEdge:
     shape: Optional[TensorShape] = None
 
 
-# ── Computational Graph ───────────────────────────────────────────────────────
+# -- Computational Graph -------------------------------------------------------
 
 @dataclass
 class ComputationalGraph:
     """
-    Full IR — G = (V, E).
+    Full IR - G = (V, E).
 
     Responsibilities:
       - Stores ordered node list (topological).
@@ -196,7 +196,7 @@ class ComputationalGraph:
     live_plot: bool = False
     eval_split: Optional[str] = None
 
-    # ── Mutation helpers ─────────────────────────────────────────────────────
+    # -- Mutation helpers -----------------------------------------------------
 
     def add_node(self, node: GraphNode) -> GraphNode:
         self.nodes.append(node)
@@ -220,11 +220,11 @@ class ComputationalGraph:
         succ_ids = {e.dst for e in self.edges if e.src == node.id}
         return [n for n in self.nodes if n.id in succ_ids]
 
-    # ── Topological sort ─────────────────────────────────────────────────────
+    # -- Topological sort -----------------------------------------------------
 
     def topological_sort(self) -> List[GraphNode]:
         """
-        Kahn's algorithm — returns nodes in dependency order.
+        Kahn's algorithm - returns nodes in dependency order.
         Raises CompilerError on cycles (should never occur in VP, but defensive).
         """
         in_degree: Dict[str, int] = {n.id: 0 for n in self.nodes}
@@ -251,12 +251,12 @@ class ComputationalGraph:
             )
         return sorted_nodes
 
-    # ── Validation pass ──────────────────────────────────────────────────────
+    # -- Validation pass ------------------------------------------------------
 
     def validate(self) -> None:
         """
         Full compile-time graph validation.
-        Raises descriptive errors — zero silent fallbacks.
+        Raises descriptive errors - zero silent fallbacks.
         """
         logger.debug("[VP Compiler] Running validation pass...")
         active = [n for n in self.nodes if not n.eliminated]
@@ -281,7 +281,7 @@ class ComputationalGraph:
 
     def _validate_shapes(self, i: int, node: GraphNode) -> None:
         if node.input_shape is None or node.output_shape is None:
-            return  # Not yet inferred — skip until after inference pass
+            return  # Not yet inferred - skip until after inference pass
         # Dense: rank must be 2
         if node.node_type == NodeType.LINEAR:
             if node.input_shape.rank != 2:
@@ -291,7 +291,7 @@ class ComputationalGraph:
                     got=node.input_shape,
                 )
 
-    # ── Optimization passes ──────────────────────────────────────────────────
+    # -- Optimization passes --------------------------------------------------
 
     def optimize(self) -> None:
         """Apply all optimization passes in order."""
@@ -303,7 +303,7 @@ class ComputationalGraph:
 
     def _fuse_linear_activation(self) -> None:
         """
-        Operator Fusion Pass — Linear + Activation → single fused node.
+        Operator Fusion Pass - Linear + Activation -> single fused node.
         Sets node.fused_with to mark the absorbed activation.
         """
         active = [n for n in self.nodes if not n.eliminated]
@@ -318,7 +318,7 @@ class ComputationalGraph:
                 nxt.eliminated = True
                 logger.debug(
                     f"[VP Optimizer] Fused {curr.layer_type}+{nxt.layer_type} "
-                    f"→ node {curr.id} (activation={fn})"
+                    f"-> node {curr.id} (activation={fn})"
                 )
 
     def _eliminate_noop_layers(self) -> None:
@@ -332,10 +332,10 @@ class ComputationalGraph:
                     node.eliminated = True
                     logger.debug(f"[VP Optimizer] Eliminated no-op BatchNorm {node.id}")
 
-    # ── Export stubs ─────────────────────────────────────────────────────────
+    # -- Export stubs ---------------------------------------------------------
 
     def to_onnx(self) -> bytes:
-        """Export graph to ONNX format (stub — requires onnx library)."""
+        """Export graph to ONNX format (stub - requires onnx library)."""
         raise NotImplementedError(
             "[VP Export] ONNX export requires: pip install velox-onnx-backend"
         )
@@ -365,8 +365,8 @@ class ComputationalGraph:
         for node in self.nodes:
             if node.eliminated:
                 continue
-            inf_tag = " [?→inferred]" if node.infer else ""
-            fused   = f"\\n⚡ fused={node.metadata.get('fused_activation', '')}" \
+            inf_tag = " [?->inferred]" if node.infer else ""
+            fused   = f"\\n[!] fused={node.metadata.get('fused_activation', '')}" \
                       if node.fused_with else ""
             in_s    = str(node.input_shape) if node.input_shape else "?"
             out_s   = str(node.output_shape) if node.output_shape else "?"
@@ -404,7 +404,7 @@ class ComputationalGraph:
             ]
         }
 
-    # ── Summary ──────────────────────────────────────────────────────────────
+    # -- Summary --------------------------------------------------------------
 
     def summary(self) -> str:
         lines = [
@@ -412,16 +412,16 @@ class ComputationalGraph:
             f"  dataset={self.dataset}  optimizer={self.optimizer_name}"
             f"  lr={self.optimizer_hparams.get('lr')}  epochs={self.epochs}"
             f"  batch={self.batch_size}  loss={self.loss}",
-            "  " + "─" * 64,
+            "  " + "-" * 64,
         ]
         for n in self.nodes:
             elim = " [ELIMINATED]" if n.eliminated else ""
-            fused = f" ⚡fused({n.metadata.get('fused_activation','')})" if n.fused_with else ""
+            fused = f" [!]fused({n.metadata.get('fused_activation','')})" if n.fused_with else ""
             lines.append(f"  {n}{elim}{fused}")
-        lines.append("  " + "─" * 64)
+        lines.append("  " + "-" * 64)
         for e in self.edges:
             src = self.node_by_id(e.src)
             if src and src.eliminated:
                 continue
-            lines.append(f"  {e.src} ──▶ {e.dst}  {e.shape or ''}")
+            lines.append(f"  {e.src} -->> {e.dst}  {e.shape or ''}")
         return "\n".join(lines)

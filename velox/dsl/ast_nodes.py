@@ -1,5 +1,5 @@
 """
-Velox Proxima (VP) — Abstract Syntax Tree Node Definitions
+Velox Proxima (VP) - Abstract Syntax Tree Node Definitions
 Layer 1: Syntax Layer
 """
 
@@ -135,7 +135,7 @@ class AttentionNode(ASTNode):
 
 @dataclass
 class ModelNode(ASTNode):
-    """Root AST node — represents an entire VP program."""
+    """Root AST node - represents an entire VP program."""
     layers: List[LayerNode] = field(default_factory=list)
     train: Optional[TrainNode] = None
     optimizer: Optional[OptimizerNode] = None
