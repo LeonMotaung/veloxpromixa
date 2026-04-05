@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from './api';
 import { useParams, Link } from 'react-router-dom';
 import { ChevronLeft, Terminal, Book, FileText, Activity, RefreshCw, Sun, Moon } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
@@ -27,7 +27,7 @@ export default function Docs() {
 
   useEffect(() => {
     // Fetch all docs once on mount
-    axios.get('/api/docs/all')
+    api.get('/api/docs/all')
       .then(res => {
         if (res.data && typeof res.data === 'object' && !res.data.error) {
           setAllDocs(res.data);
